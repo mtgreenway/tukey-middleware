@@ -1,0 +1,45 @@
+
+# by default forward all commands to to the 
+# OpenStack api, need to specify where to forward
+# things to probably in this config rigth here!
+# TODO:  proxy requires a forward url and port
+# that will be used!!! so stupid :(
+[proxy]
+host: 10.103.114.3
+port: 8774
+
+[auth]
+driver: OpenStackAuth
+host:	10.103.114.3
+port:	5000
+
+# It currently doesn't make sense to have a port
+# since we use the same configuration file and 
+# setup for two instances of the API translation
+# proxy.
+#port:	
+
+#forward:    True
+
+[commands]
+# this should probably not be done but we can do a hack here
+# and aggregate all the usage info here in this one call
+# this may help us reach the deadline :(
+os-simple-tenant-usage: echo [{}]
+
+
+
+[tag]
+cloud: Sullivan
+
+cloud_name: Sullivan
+
+cloud_id: sullivan
+
+[enabled]
+command: if [ '${sullivan/access/user/username}' = '$'{sullivan/access/user/username} ]; then
+        false
+    else
+        true
+    fi
+

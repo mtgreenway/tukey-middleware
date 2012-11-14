@@ -1,0 +1,2 @@
+@echo off
+echo [{"username":"test","id":"i-47F6083A","image":"emi-59EA120E","address":"10.103.112.63","status":"running","host":"kg12-compute-17","launchindex":"0","instancetype":"c1.xlarge","launchdatetime":"2012-04-06T21:53:16.59Z","placement":"kg12","kernel":"eki-E7641078","ramdisk":"eri-1BF61154"}]

@@ -1,0 +1,43 @@
+[commands]
+basedir=/home/ubuntu
+fingerprint='FC9B3EC071DE820529E974BDF28152B028BC3A6D'
+gpg_home=%(basedir)s/.gnupg
+passphrase='tukey'
+# use local mounted glusterfs
+host=127.0.0.1:5005
+keyfile=%(basedir)s/tukey/tukey-middleware/tukey_cli/etc/keys/tukey.pub
+
+script_file=%(basedir)s/tukey/tukey-middleware/auth_proxy/ssh_gen.py
+script=python %(script_file)s %(fingerprint)s %(gpg_home)s %(passphrase)s %(host)s %(keyfile)s
+
+resource=sullivan
+username=${sullivan/access/user/username}
+
+os-keypairs: if [ '${method}' = 'POST' ]; then
+                if [ '${public_key}'  = '$'{public_key} ]; then
+                    %(script)s create %(username)s %(resource)s '${name}' ${password}
+                else
+                    %(script)s import %(username)s %(resource)s '${name}' '${public_key}'
+                fi
+        elif [ '${id}' = '$'{id} ];then
+            %(script)s list %(username)s %(resource)s
+        elif [ '${method}' = 'DELETE' ]; then
+            %(script)s delete %(username)s %(resource)s ${id}
+        else
+            %(script)s get %(username)s %(resource)s '${name}'
+        fi
+
+
+[tag]
+cloud: Sullivan Login Node
+
+cloud_name: Sullivan Login Node
+
+cloud_id: loginsullivan
+
+[enabled]
+command: if [ '${sullivan/access/user/username}' = '$'{sullivan/access/user/username} ]; then
+	false
+    else
+	true
+    fi

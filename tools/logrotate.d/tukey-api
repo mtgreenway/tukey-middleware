@@ -1,0 +1,14 @@
+/var/log/tukey/tukey-api.log {
+    daily
+    missingok
+}
+
+/var/log/tukey/glance-api.log {
+    daily
+    missingok
+}
+
+/var/log/tukey/tukey-usage.log {
+    daily
+    missingok
+}

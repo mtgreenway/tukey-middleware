@@ -1,0 +1,249 @@
+[auth]
+driver: EucalyptusAuth
+
+[commands]
+# Variables used for the commands
+compute=python tools/eucalyptus/compute.py
+storage=python tools/eucalyptus/storage.py
+
+basedir=/var/lib/cloudgui/users/
+cred_file=%(basedir)s${username}/.euca/eucarc
+creds=--credentials %(cred_file)s
+
+
+# The commands
+servers/detail: %(compute)s %(creds)s --list instances
+
+servers: if [ '${method}' = 'DELETE' ]; then
+	    %(compute)s %(creds)s --action kill --id ${id}
+	elif [ '${method}' = 'POST' ]; then
+	    if [ '${user_data}'  = '$'{user_data} ]; then
+		    %(compute)s %(creds)s --action launch --id ${imageRef} --size ${flavorRef} --number ${min_count} --keyname ${key_name}
+	    else
+		    %(compute)s %(creds)s --action launch --id ${imageRef} --size ${flavorRef} --number ${min_count} --keyname ${key_name} --userdata ${user_data}
+	    fi
+	else
+	    %(compute)s %(creds)s --list instances --id ${id}
+	fi
+
+flavors/detail: python tools/eucalyptus/adler_flavors.py
+
+flavors: python tools/eucalyptus/adler_flavors.py ${id}
+
+images/detail: if [ "${property-image_type}" = 'snapshot' ];then
+		#echo '[{"id":""}]'
+		echo ''
+	    else
+		if [ '${marker}' = '$'{marker} ]; then
+		    %(compute)s %(creds)s --list images --limit ${limit}
+		else
+		    %(compute)s %(creds)s --list images --limit ${limit} --marker ${marker}
+		fi
+	    fi
+
+images:	    %(compute)s %(creds)s --list images --id ${id}
+
+
+os-keypairs: if [ '${method}' = 'POST' ]; then
+		if [ '${public_key}'  = '$'{public_key} ]; then
+	            %(compute)s %(creds)s --action create_keypair --keyname ${name}
+		else
+		    KEY=$(tempfile);echo "${public_key}" > $KEY
+		    %(compute)s %(creds)s --action import_keypair --keyname ${name} --keyfile $KEY
+		    rm $KEY
+		fi
+	elif [ '${id}' = '$'{id} ];then
+	    %(compute)s %(creds)s --list keys
+	elif [ '${method}' = 'DELETE' ]; then
+	    euca-delete-keypair --config %(cred_file)s  ${id}
+	else
+	    %(compute)s %(creds)s --list keys --id ${id}
+	fi
+
+
+os-quota-sets: python tools/eucalyptus/get_quota.py 10.103.112.3 9402 ${username}
+
+os-simple-tenant-usage: python tools/get_usage.py sullivan ${start} ${end} ${username} ${access/user/username}
+
+[transformations:listSizes]
+id:	name
+
+[tag]
+cloud:	Adler
+
+cloud_name: Adler
+
+cloud_id: adler
+
+[transformations:servers/detail]
+OS-EXT-STS power_state=1
+tenant_id: ${username}
+username_id: ${username}
+name: $(id)
+status: $(extra/status)
+key_name: $(extra/keyname)
+updated: $(launchdatetime)
+created: $(launchdatetime)
+hostId: ''
+progress: 100
+accessIPv4:
+accessIPv6:
+
+image: {
+    "id" "$(extra/imageId)",
+    "links" [
+	{
+	    "rel" "self",
+	    "href" "http://127.0.0.1:8774/v1.1/${username}/images/$(extra/imageId)"
+	},
+	{
+	    "rel" "bookmark",
+	    "href" "http://127.0.0.1:8774/${username}/images/$(extra/imageId)"
+	}
+    ]
+    }
+    
+flavor: {
+    "id" "$(extra/instancetype)",
+    "links" [
+	{
+	    "rel" "self",
+	    "href" "http://127.0.0.1:8774/v1.1/${username}/flavors/$(extra/instancetype)"
+	},
+	{
+	    "rel" "bookmark",
+	    "href" "http://127.0.0.1:8774/${username}/flavors/$(extra/instancetype)"
+	}
+    ]
+    }
+
+addresses: {
+    "private" [
+	{
+	    "version" 4,
+	    "addr" "$(extra/private_dns)"
+	}
+    ]
+    }
+    
+    
+metadata: {}
+
+links: [
+    {
+	"rel" "self",
+	"href" "http://127.0.0.1:8774/v1.1/${username}/servers/$(id)"
+    },
+    {
+	"rel" "bookmark",
+	"href" "http://127.0.0.1:8774/${username}/servers/$(id)"
+    }
+    ]
+
+
+[transformations:servers]
+OS-EXT-STS power_state=1
+tenant_id: ${username}
+username_id: ${username}
+name: $(id)
+status: $(extra/status)
+key_name: $(extra/keyname)
+updated: $(launchdatetime)
+created: $(launchdatetime)
+hostId: ''
+progress: 100
+accessIPv4:
+accessIPv6:
+
+image: {
+    "id" "$(extra/imageId)",
+    "links" [
+        {
+            "rel" "self",
+            "href" "http://127.0.0.1:8774/v1.1/${username}/images/$(extra/imageId)"
+        },
+        {
+            "rel" "bookmark",
+            "href" "http://127.0.0.1:8774/${username}/images/$(extra/imageId)"
+        }
+    ]
+    }
+
+flavor: {
+    "id" "$(extra/instancetype)",
+    "links" [
+        {
+            "rel" "self",
+            "href" "http://127.0.0.1:8774/v1.1/${username}/flavors/$(extra/instancetype)"
+        },
+        {
+            "rel" "bookmark",
+            "href" "http://127.0.0.1:8774/${username}/flavors/$(extra/instancetype)"
+        }
+    ]
+    }
+
+addresses: {
+    "private" [
+        {
+            "version" 4,
+            "addr" "$(extra/private_dns)"
+        }
+    ]
+    }
+
+
+metadata: {}
+
+links: [
+    {
+        "rel" "self",
+        "href" "http://127.0.0.1:8774/v1.1/${username}/servers/$(id)"
+    },
+    {
+        "rel" "bookmark",
+        "href" "http://127.0.0.1:8774/${username}/servers/$(id)"
+    }
+    ]
+
+
+
+[transformations:images/detail]
+properties: { "image_type" "$(extra/imagetype)"}
+created: 
+updated:
+container_format: $(extra/container_format)
+is_public: extra/ispublic
+owner:	extra/ownerid
+image_type: $(extra/imagetype)
+tenant_id: ${username}
+user_id: ${username}
+status: $(extra/state)
+metadata: {}
+links:  [
+                {
+                    "rel" "self",
+                    "href" "http://127.0.0.1/v1.1/${username}/images/${id}"                },
+                {
+                    "rel" "bookmark",
+                    "href" "http://127.0.0.1/${username}/images/${id}"}
+            ]
+
+[transformations:os-keypairs]
+keypair:
+     {"private_key" "$(keyMaterial)",
+     "public_key" "",
+     "fingerprint" "$(keyFingerprint)",
+     "name" "$(keyName)"}
+
+[enabled]
+command: if [ '${adler/username}' = '$'{adler/username} ]; then
+        false
+    else
+        true
+    fi
+
+
+[errors]
+createKeypair:	result
+launchVm:   result

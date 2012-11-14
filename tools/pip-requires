@@ -1,0 +1,16 @@
+# Tukey Requirements
+
+# Common requirements
+WebOb
+python-memcached
+psycopg2
+
+# Authentication Proxy Requirements
+python-gnupg
+M2Crypto
+Flask
+
+# API Proxy requirements
+xmldict
+apache-libcloud
+requests

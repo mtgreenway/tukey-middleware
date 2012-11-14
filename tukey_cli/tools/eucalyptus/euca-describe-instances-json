@@ -1,0 +1,146 @@
+#!/usr/bin/env python
+
+# Modified version of euca-describe-instances
+# prints out a JSON string that does not show 
+# reservations but shows username with each instance
+# changed by Matthew Greenway mgreenway@uchicago.edu
+# Software License Agreement (BSD License)
+#
+# Copyright (c) 2009, Eucalyptus Systems, Inc.
+# All rights reserved.
+#
+# Redistribution and use of this software in source and binary forms, with or
+# without modification, are permitted provided that the following conditions
+# are met:
+#
+#   Redistributions of source code must retain the above
+#   copyright notice, this list of conditions and the
+#   following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above
+#   copyright notice, this list of conditions and the
+#   following disclaimer in the documentation and/or other
+#   materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# Author: Neil Soman neil@eucalyptus.com
+
+import getopt, sys, os
+from euca2ools import Euca2ool, InstanceValidationError, Util
+
+usage_string = """
+Shows information about instances.
+
+euca-describe-instances [-h, --help] [--version] [--debug]
+[instance1... instanceN] 
+
+OPTIONAL PARAMETERS
+
+instance1... instanceN		instances to describe.
+
+"""
+
+version_string = """    euca-describe-instances version: 1.0 (BSD)"""
+
+def usage():
+    print usage_string
+    Util().usage()
+
+def version():
+    print version_string
+    sys.exit()
+
+def display_reservations(reservations, instance_ids):
+    check_instance_ids = False
+    if(len(instance_ids) > 0):
+	check_instance_ids = True
+    first_instance = True
+    print '['   
+    for reservation in reservations:
+	instances = []
+        if check_instance_ids:
+ 	    for instance in reservation.instances:
+	        if instance.id in instance_ids:
+	            instances.append(instance)
+        else:
+	    instances = reservation.instances
+	if (len(instances) == 0):
+ 	    continue
+	for instance in instances:
+	    if instance:
+	        instance_string = '"username":"%s",' % reservation.owner_id 
+	        basic_attrs = '"id":"%s","image":"%s","address":"%s","status":"%s"'
+	        instance_string += basic_attrs  % (instance.id, instance.image_id, instance.private_dns_name, instance.state) 
+	        if instance.key_name:
+		    instance_string += ',"keyname":"%s"' % instance.key_name
+	    	if instance.ami_launch_index:
+		    instance_string += ',"launchindex":"%s"' % instance.ami_launch_index
+	        if instance.product_codes:
+	            first = True
+		    for p in instance.product_codes:
+		        if first:
+		            instance_string += ',"product_codes":"%s' % p
+			    first = False
+		        else:
+			    instance_string += ',%s' % p
+		    instance_string += '"'
+		if instance.instance_type:
+		    instance_string += ',"instancetype":"%s"' % instance.instance_type
+		if instance.launch_time:
+		    instance_string += ',"launchdatetime":"%s"' % instance.launch_time
+		if instance.placement:
+		    instance_string += ',"placement":"%s"' % instance.placement
+		if instance.kernel:
+		    instance_string += ',"kernel":"%s"' % instance.kernel
+		if instance.ramdisk:
+		    instance_string += ',"ramdisk":"%s"' % instance.ramdisk
+	        if first_instance:
+	            first_instance = False
+                else:
+	            print ','
+	        print '{%s}' % (instance_string)
+    print ']'
+
+def main():
+    euca = None
+    try:
+	euca = Euca2ool()
+    except Exception, e:
+	print e
+        usage()
+ 
+    for name, value in euca.opts:
+        if name in ('-h', '--help'):
+            usage()
+	elif name == '--version':
+	    version()
+
+    instance_ids = euca.process_args()
+    try:
+	for id in instance_ids:
+    	    euca.validate_instance_id(id)
+    except InstanceValidationError:
+        print 'Invalid instance id'
+        sys.exit(1)
+
+    euca_conn = euca.make_connection()
+    try:
+        reservations = euca_conn.get_all_instances(instance_ids)
+    except Exception, ex:
+        euca.display_error_and_exit('%s' % ex)
+
+    display_reservations(reservations, instance_ids)
+if __name__ == "__main__":
+    main()
+ 

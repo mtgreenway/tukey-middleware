@@ -1,0 +1,4 @@
+/var/log/tukey/tukey-auth.log {
+    daily
+    missingok
+}

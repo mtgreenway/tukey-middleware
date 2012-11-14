@@ -1,0 +1,43 @@
+[commands]
+basedir=/home/ubuntu
+fingerprint='FC9B3EC071DE820529E974BDF28152B028BC3A6D'
+gpg_home=%(basedir)s/.gnupg
+passphrase='tukey'
+# G12 host with ssh keys
+host=10.103.112.1:5005
+keyfile=%(basedir)s/tukey/tukey-middleware/tukey_cli/etc/keys/adler.pub
+
+script_file=%(basedir)s/tukey/tukey-middleware/auth_proxy/ssh_gen.py
+script=python %(script_file)s %(fingerprint)s %(gpg_home)s %(passphrase)s %(host)s %(keyfile)s
+
+resource=adler
+username=${adler/username}
+
+os-keypairs: if [ '${method}' = 'POST' ]; then
+                if [ '${public_key}'  = '$'{public_key} ]; then
+                    %(script)s create %(username)s %(resource)s '${name}' ${password}
+                else
+                    %(script)s import %(username)s %(resource)s '${name}' '${public_key}'
+                fi
+        elif [ '${id}' = '$'{id} ];then
+            %(script)s list %(username)s %(resource)s
+        elif [ '${method}' = 'DELETE' ]; then
+            %(script)s delete %(username)s %(resource)s ${id}
+        else
+            %(script)s get %(username)s %(resource)s '${name}'
+        fi
+
+
+[tag]
+cloud: Adler Login Node
+
+cloud_name: Adler Login Node
+
+cloud_id: loginadler
+
+[enabled]
+command: if [ '${adler/username}' = '$'{adler/username} ]; then
+        false
+    else
+        true
+    fi
