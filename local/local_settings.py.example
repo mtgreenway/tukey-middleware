@@ -29,3 +29,11 @@ KEYSTONE_HOST = '10.103.114.3'
 # If you have setup an external usage service
 USAGE_DB_PASSWORD = ''
 USAGE_DB_HOST = '10.103.112.1'
+
+# The host API proxies will be running on
+API_HOST = '127.0.0.1'
+
+# Required for Swift somehow this will be determined
+# at OpenStack cloud install time
+MEMBER_ROLE_ID = "7cc444dd12f4413c90f1f19e3c109f99"
+

@@ -57,7 +57,7 @@ class AuthProxy(object):
     other middle ware between Horizon and cloud services.
     '''
 
-    TOKEN_EXPIRATION = 86400
+    TOKEN_EXPIRATION = 24*60*60
 
     def __init__(self, keystone_host, keystone_port, memcache_host, 
         memcache_port, conf_dir, logger):
@@ -67,14 +67,14 @@ class AuthProxy(object):
         Eventually fetch these from a config file.
         '''
 
-	self.logger = logger
+        self.logger = logger
         
         self.keystone_host = keystone_host
         self.keystone_port = keystone_port
 
-	self.auth_systems = dict()
+        self.auth_systems = dict()
 
-	for conf in glob(path.join(conf_dir, '*')):
+        for conf in glob(path.join(conf_dir, '*')):
 
             config = ConfigParser()
             config.read(conf)
@@ -89,10 +89,14 @@ class AuthProxy(object):
                     host = config.get('auth', 'host')
                     port = config.get('auth', 'port')
 
-                    driver_object = OpenStackAuth(host, port)
+                    driver_object = OpenStackAuth(local_settings.API_HOST,
+                        local_settings.MEMBER_ROLE_ID, 
+                        AuthProxy.TOKEN_EXPIRATION, host, port)
 
                 if driver == 'EucalyptusAuth':
-                    driver_object = EucalyptusAuth()
+                    driver_object = EucalyptusAuth(local_settings.API_HOST,
+                        local_settings.MEMBER_ROLE_ID,
+                        AuthProxy.TOKEN_EXPIRATION)
 
                 self.auth_systems[conf.split(sep)[-1]] = driver_object
 
@@ -119,12 +123,23 @@ class AuthProxy(object):
         Keystone if the user has an authorized OpenStack account otherwise
         return the fake tenant data
         '''
-        user_info = self.mc.get(req.headers['x-auth-token'])
+
+        token = None
+
+        if 'x-auth-token' in req.headers:
+            token = req.headers['x-auth-token']
+        else:
+            method = req.headers["x-auth-key"]
+            identifier = req.headers["x-auth-user"]
+            _, token = self.__authenticate(method, identifier)
+
+        
+        user_info = self.mc.get(str(token))
 
         if self.__is_openstack(user_info):
             del(req.headers['Content-Length'])
             resp = self.__forward("GET", req.path, "", req.headers)
-	else:
+        else:
             resp = self.__json_response(user_info['fake_tenant'])
         
         return resp
@@ -141,16 +156,21 @@ class AuthProxy(object):
         req_body = json.loads(req.body)
         auth_method = req_body["auth"]["passwordCredentials"]["password"]
         identifier = req_body["auth"]["passwordCredentials"]["username"]
+        tenant = None
 
-	self.logger.debug("auth_method %s", auth_method)
-	self.logger.debug("identifier %s", identifier)
+        if "tenantName" in req_body["auth"]:
+            tenant = req_body["auth"]["tenantName"]
 
-        user_info = self.__authenticate(auth_method, identifier)
 
-	resp = self.__json_response(user_info)
+        self.logger.debug("auth_method %s", auth_method)
+        self.logger.debug("identifier %s", identifier)
+
+        user_info, _ = self.__authenticate(auth_method, identifier, tenant)
+
+        resp = self.__json_response(user_info)
     
-	if 'error' in user_info:
-	    resp.status = 401
+        if 'error' in user_info:
+            resp.status = 401
         
         return resp
         
@@ -161,6 +181,12 @@ class AuthProxy(object):
         
         Returns the massive endpoint info JSON.
         '''
+        #if 'x-auth-token' not in req.headers:
+
+        #    auth_method = req.headers["x-auth-key"]
+        #    identifier = req_body["auth"]["passwordCredentials"]["username"]
+        #    self.__authenticate
+            
         user_info = self.mc.get(req.headers['x-auth-token'])
 
         if self.__is_openstack(user_info):
@@ -171,7 +197,7 @@ class AuthProxy(object):
         return resp
         
         
-    def __authenticate(self, auth_method, identifier):
+    def __authenticate(self, auth_method, identifier, tenant):
         '''
         :param auth_method: the authentication method "openid", "shibboleth"
         :param identifier: id string could be shib EPPN like 
@@ -186,17 +212,17 @@ class AuthProxy(object):
         user_info = dict()
         has_openstack = False
 
-	#token = "guest"
-	id_info = {"error": {
-		"message": "Invalid user / password",
-		"code": 401, "title": "Not Authorized"}}
+        #token = "guest"
+        id_info = {"error": {
+                "message": "Invalid user / password",
+                "code": 401, "title": "Not Authorized"}}
 
         for name, auth in self.auth_systems.items():
 
-            auth_creds = auth.authenticate(auth_method, identifier, name)
+            auth_creds = auth.authenticate(auth_method, identifier, tenant, name)
 
             if auth_creds is not None:
-		self.logger.debug( "Auth creds: %s", auth_creds)
+                self.logger.debug( "Auth creds: %s", auth_creds)
                 user_info[name] = auth_creds
 
                 if isinstance(auth, OpenStackAuth) and not has_openstack:
@@ -206,24 +232,24 @@ class AuthProxy(object):
                     id_info = auth_creds
 
         if not has_openstack and len(user_info.keys()) > 0:
-	    auth = self.auth_systems[user_info.keys()[0]]
+            auth = self.auth_systems[user_info.keys()[0]]
 
             id_info = auth.fake_token()
-	    token = id_info['access']['token']['id']
+            token = id_info['access']['token']['id']
             user_info['fake_tenant'] = auth.fake_tenant()
             user_info['fake_endpoint'] = auth.fake_endpoint()
 
-	if "error" in id_info:
-	    self.logger.info("login for %s FAIL", identifier)
-	    return id_info
+        if "error" in id_info:
+            self.logger.info("login for %s FAIL", identifier)
+            return id_info
 
-	self.logger.debug(user_info)
+        self.logger.debug(user_info)
 
-	self.logger.info("login for %s SUCCESS", identifier)
+        self.logger.info("login for %s SUCCESS", identifier)
 
         self.mc.set(str(token), user_info, AuthProxy.TOKEN_EXPIRATION)
 
-        return id_info    
+        return id_info, token
         
         
     # HTTP, Proxy and JSON helper methods
@@ -256,15 +282,15 @@ class AuthProxy(object):
         conn.request(method, path, body, headers)
         res = conn.getresponse().read()
         conn.close()
-	res_object = json.loads(res)
-	if 'access' in res_object and 'token' in res_object['access']:
-	    old = self.mc.get(headers['x-auth-token'])
-	    self.mc.set(str(res_object['access']['token']['id']), old,
-		AuthProxy.TOKEN_EXPIRATION)
-	
-	res = res.replace(self.keystone_host, '127.0.0.1')
-	self.logger.debug( "Forwarded request")
-	self.logger.debug( res)
+        res_object = json.loads(res)
+        if 'access' in res_object and 'token' in res_object['access']:
+            old = self.mc.get(headers['x-auth-token'])
+            self.mc.set(str(res_object['access']['token']['id']), old,
+                AuthProxy.TOKEN_EXPIRATION)
+        
+        res = res.replace(self.keystone_host, '127.0.0.1')
+        self.logger.debug( "Forwarded request")
+        self.logger.debug( res)
         resp = Response(res)
         resp.conditional_response = True
         return resp
@@ -276,7 +302,7 @@ class AuthProxy(object):
         :param serial_obj: object acceptable by json.dumps()
         '''
         resp = Response(json.dumps(serial_obj))
-	self.logger.debug( json.dumps(serial_obj))
+        self.logger.debug( json.dumps(serial_obj))
         resp.conditional_response = True
         return resp
 
@@ -333,7 +359,7 @@ if __name__ == '__main__':
 
 
     formatter = logging.Formatter(
-	'%(asctime)s %(levelname)s %(message)s %(filename)s:%(lineno)d')
+        '%(asctime)s %(levelname)s %(message)s %(filename)s:%(lineno)d')
 
     log_file_name = local_settings.LOG_DIR + 'tukey-auth.log'
 

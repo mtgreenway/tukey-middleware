@@ -27,33 +27,40 @@ class AuthSystem(object):
     to internal authentication attributes.
     '''
 
-    def authenticate(self, method, identifier):
+    def authenticate(self, method, identifier, tenant, cloud):
         '''Authenticate a user with a federated method and ifentifier 
-	like OpenID email attribute or Shibboleth EPPN
+        like OpenID email attribute or Shibboleth EPPN
 
 
-	:param method: The authentication method for example 'shibboleth'
-		or 'openid'
+        :param method: The authentication method for example 'shibboleth'
+                or 'openid'
 
         :param identifier: the user's email address obtained from OpenID
                 metadata or user's Shibboleth EduPerson Principle Name
             see https://wiki.shibboleth.net.  And others...
         '''
-        return None
+        raise NotImplementedError
 
 
 class FakeId(object):
     '''Mixin for non Keystone authentication methods to return the 
     Keystone API for token, tenant and endpoint
     '''
+
+    def __init__(self, api_url, member_role_id, token_lifetime):
+
+        self.token_lifetime = token_lifetime
+        self.url = api_url
+        self.member_role_id = member_role_id
+
+
     
     def _expiration(self):
-	'''Returns times stamp of one day from now
-	'''
-	date_format = '%Y-%m-%dT%H:%M:%SZ'
-	day = 24*60*60
-	current = time.time()
-	return str(datetime.datetime.fromtimestamp(current + day).strftime(date_format))
+        '''Returns times stamp of token_lifetime from now
+        '''
+        date_format = '%Y-%m-%dT%H:%M:%SZ'
+        current = time.time()
+        return str(datetime.datetime.fromtimestamp(current + self.token_lifetime).strftime(date_format))
 
 
     def _format_token(self, username, user_id, token_id, expires):
@@ -97,6 +104,66 @@ class FakeId(object):
             }
 
 
+
+    def _format_service_catalog(self, url, tenant_id):
+        '''The Keystone API Service Catalog form.
+        '''
+        return [
+            {
+                "endpoints": [
+                    {
+                        "adminURL": "http://%s:9292/v1" % url,
+                        "region": "RegionOne",
+                        "publicURL": "http://%s:9292/v1" % url,
+                        "internalURL": "http://%s:9292/v1" % url
+                    }
+                ],
+                "endpoints_links": [],
+                "type": "image",
+                "name": "Image Service"
+            },
+            {
+                "endpoints": [
+                    {
+                        "adminURL": "http://%s:8774/v1.1/%s" % (url, tenant_id),
+                        "region": "RegionOne",
+                        "publicURL": "http://%s:8774/v1.1/%s" % (url, tenant_id),
+                        "internalURL": "http://%s:8774/v1.1/%s" % (url, tenant_id)
+                    }
+                ],
+                "endpoints_links": [],
+                "type": "compute",
+                "name": "Compute Service"
+            },
+            {
+                "endpoints": [
+                    {
+                        "adminURL": "http://%s:8773/services/Admin" % url,
+                        "region": "RegionOne",
+                        "publicURL": "http://%s:8773/services/Cloud" % url,
+                        "internalURL": "http://%s:8773/services/Cloud" % url
+                    }
+                ],
+                "endpoints_links": [],
+                "type": "ec2",
+                "name": "EC2 Service"
+            },
+            {
+                "endpoints": [
+                    {
+                        "adminURL": "http://%s:35357/v2.0" % url,
+                        "region": "RegionOne",
+                        "publicURL": "http://%s:5000/v2.0" % url,
+                        "internalURL": "http://%s:5000/v2.0" % url
+                    }
+                ],
+                "endpoints_links": [],
+                "type": "identity",
+                "name": "Identity Service"
+            }
+        ]
+
+
     def _format_endpoint(self, token_id, tenant_id, user_id, tenant_name,
         username, expires, url):
         '''The Keystone API endpoints format.
@@ -113,69 +180,15 @@ class FakeId(object):
                     "name": tenant_name
                 }
             },
-            "serviceCatalog": [
-                {
-                    "endpoints": [
-                        {
-                            "adminURL": "http://%s:9292/v1" % url,
-                            "region": "RegionOne",
-                            "publicURL": "http://%s:9292/v1" % url,
-                            "internalURL": "http://%s:9292/v1" % url
-                        }
-                    ],
-                    "endpoints_links": [],
-                    "type": "image",
-                    "name": "Image Service"
-                },
-                {
-                    "endpoints": [
-                        {
-                            "adminURL": "http://%s:8774/v1.1/%s" % (url, tenant_id),
-                            "region": "RegionOne",
-                            "publicURL": "http://%s:8774/v1.1/%s" % (url, tenant_id),
-                            "internalURL": "http://%s:8774/v1.1/%s" % (url, tenant_id)
-                        }
-                    ],
-                    "endpoints_links": [],
-                    "type": "compute",
-                    "name": "Compute Service"
-                },
-#                {
-#                    "endpoints": [
-#                        {
-#                            "adminURL": "http://%s:8773/services/Admin" % url,
-#                            "region": "RegionOne",
-#                            "publicURL": "http://%s:8773/services/Cloud" % url,
-#                            "internalURL": "http://%s:8773/services/Cloud" % url
-#                        }
-#                    ],
-#                    "endpoints_links": [],
-#                    "type": "ec2",
-#                    "name": "EC2 Service"
-#                },
-                {
-                    "endpoints": [
-                        {
-			    # we may need to add this in the future
-			    # for our admin stuff
-                            #"adminURL": "http://%s:35357/v2.0" % url,
-                            "region": "RegionOne",
-                            "publicURL": "http://%s:5000/v2.0" % url,
-                            "internalURL": "http://%s:5000/v2.0" % url
-                        }
-                    ],
-                    "endpoints_links": [],
-                    "type": "identity",
-                    "name": "Identity Service"
-                }
-            ],
+            "serviceCatalog": self._format_service_catalog(url, tenant_id),
             "user": {
                 "username": username,
                 "roles_links": [],
                 "id": user_id,
                 "roles": [
                     {
-                        "id": "7cc444dd12f4413c90f1f19e3c109f99",
+                        #"id": "7cc444dd12f4413c90f1f19e3c109f99",
+                        "id": self.member_role_id,
                         "name": "Member"
                     }
                 ],
@@ -203,17 +216,21 @@ class FakeId(object):
         '''    
         pass
 
-class OpenStackAuth(AuthSystem):
+class OpenStackAuth(AuthSystem, FakeId):
     '''Contacts database with OpenID or Shibboleth to get 
     OpenStack credentials.    
     '''
 
-    def __init__(self, keystone_host, keystone_port):
+    def __init__(self, api_url, member_role_id, token_lifetime,
+        keystone_host, keystone_port):
+
         self.keystone_host = keystone_host
         self.keystone_port = keystone_port
 
+        super(OpenStackAuth, self).__init__(api_url, member_role_id, token_lifetime)
 
-    def authenticate(self, method, identifier, cloud_name):
+
+    def authenticate(self, method, identifier, tenant, cloud_name):
         username, password = auth_db.userInfo(method, identifier, cloud_name)
 
         creds = {
@@ -224,6 +241,7 @@ class OpenStackAuth(AuthSystem):
         wrapped_creds = {
             "auth":
                 {
+                    "tenantName": tenant,
                     "passwordCredentials": creds
                 }
             }
@@ -242,7 +260,7 @@ class OpenStackAuth(AuthSystem):
         conn.request("POST", "/v2.0/tokens", body, headers)
         res = conn.getresponse()
 
-	logger = logging.getLogger('tukey-auth')
+        logger = logging.getLogger('tukey-auth')
         logger.debug("status from contacting keystone: %s", res.status)
 
         if res.status != 200:
@@ -251,26 +269,34 @@ class OpenStackAuth(AuthSystem):
         access = res.read()
         conn.close()
 
-        return json.loads(access)
+        access_obj = json.loads(access)
+        
+        if "access" in access_obj and "serviceCatalog" in access_obj[
+            "access"] and "tenant" in access_obj["access"]["token"]:
+            tenant_id = access_obj["access"]["token"]["tenant"]["id"]
+            access_obj["access"][
+                "serviceCatalog"] = self._format_service_catalog(
+                    "127.0.0.1", tenant_id)
+
+        return access_obj
 
 
 class EucalyptusAuth(AuthSystem, FakeId):
 
-    def authenticate(self, method, identifier, cloud_name):
+    def authenticate(self, method, identifier, tenant, cloud_name):
         self.username, _ = auth_db.userInfo(method, identifier, cloud_name)
 
-	if self.username == '':
-	    return None
+        if self.username == '':
+            return None
 
         fake_id = 'Eucalyptus-' + self.username
         self.tenant_name = fake_id
         self.token_id = fake_id
         self.tenant_id = fake_id
         self.user_id = fake_id
-        self.url = '127.0.0.1'
         self.expires = self._expiration()
 
-        return {"username": self.username}	
+        return {"username": self.username}        
 
     def fake_token(self):
         return self._format_token(self.username, self.user_id,
