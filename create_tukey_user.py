@@ -4,13 +4,15 @@ import psycopg2
 import sys
 import optparse
 
+from local import local_settings
+
 logger = logging.getLogger(__name__)
 
 def connect():
     conn_template = "dbname='%s' user='%s' host='%s' password='%s'"
     db_name = 'federated_auth'
     db_username = 'cloudgui'
-    db_password = 'Ahgeibi6'
+    db_password = local_settings.AUTH_DB_PASSWORD
     host = 'localhost'
 
     connection = None
