@@ -289,7 +289,7 @@ class EucalyptusAuth(AuthSystem, FakeId):
         if self.username == '':
             return None
 
-        fake_id = 'Eucalyptus-' + self.username
+        fake_id = cloud_name + '-' + self.username
         self.tenant_name = fake_id
         self.token_id = fake_id
         self.tenant_id = fake_id
