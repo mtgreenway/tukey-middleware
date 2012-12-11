@@ -109,21 +109,9 @@ def main():
 
     total_hours = (_stop_unix - _start_unix) / (60.* 60)
 
-    resources = {
-	'cloud': {
-	    'adler': 'OSDC Cloud2',
-	    'sullivan': 'OSDC-Sullivan'
-	},
-	'hadoop': {
-	name.replace('-','_').lower(): name for name in [
-	    'OCC-Y', 'OCC-LVOC-HADOOP']
-	}
-    }
+    resources = local_settings.USAGE_RESOURCES
 
-    attributes = {
-	'hadoop': ['jobs', 'hdfsdu'],
-	'cloud': ['du', 'cores', 'ram']
-    }
+    attributes = local_settings.USAGE_ATTRIBUTES
 
     usages = []
 
