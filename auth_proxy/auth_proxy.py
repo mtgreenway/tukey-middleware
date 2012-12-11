@@ -241,7 +241,7 @@ class AuthProxy(object):
 
         if "error" in id_info:
             self.logger.info("login for %s FAIL", identifier)
-            return id_info
+            return id_info, None
 
         self.logger.debug(user_info)
 
