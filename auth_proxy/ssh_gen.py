@@ -23,7 +23,7 @@ import local_settings
 
 #logging settings 
 logger = logging.getLogger('tukey-auth')
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 formatter = logging.Formatter(
     '%(asctime)s %(levelname)s %(message)s %(filename)s:%(lineno)d')
@@ -31,7 +31,7 @@ formatter = logging.Formatter(
 log_file_name = local_settings.LOG_DIR + 'tukey-auth.log'
 
 logFile = logging.handlers.WatchedFileHandler(log_file_name)
-logFile.setLevel(logging.DEBUG)
+#logFile.setLevel(logging.DEBUG)
 logFile.setFormatter(formatter)
 
 logger.addHandler(logFile)
