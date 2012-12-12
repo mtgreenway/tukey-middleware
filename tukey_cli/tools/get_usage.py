@@ -37,8 +37,8 @@ def time_to_unix(time_str):
 def query_usage(query):
 
     conn_template = "dbname='%s' user='%s' host='%s' password='%s'"
-    db_name = 'dashboard'
-    db_username = 'console_ro'
+    db_name = local_settings.USAGE_DB_NAME
+    db_username = local_settings.USAGE_DB_USERNAME
     db_password =  local_settings.USAGE_DB_PASSWORD
     host = local_settings.USAGE_DB_HOST
 

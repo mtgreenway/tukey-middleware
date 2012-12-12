@@ -25,6 +25,9 @@ LOG_DIR = '/var/log/tukey/'
 
 # If you have setup an external usage service
 USAGE_DB_PASSWORD = ''
+USAGE_DB_USERNAME = 'console_ro'
+USAGE_DB_NAME = 'dashboard'
+
 USAGE_DB_HOST = '10.103.112.1'
 
 USAGE_RESOURCES = {
