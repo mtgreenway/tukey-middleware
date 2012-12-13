@@ -35,7 +35,12 @@ Before installing you will need to copy local/local_settings.py.example
 to local/local_settings.py and put in the values for your cloud.
 
 For local development, first create a virtualenv for the project.
-In the ``tools`` directory there is a script to create one for you::
+In the ``tools`` directory there is a script to create one for you.
+This script not only creates the virtualenv but it will also call two
+additional scripts for setting up the database and the log directories
+tools/create_db.sh and tools/create_log.sh respectively.  Both of these
+scripts require sudo access and may need to modified to meet the
+requirements of your system.::
 
   $ python tools/install_venv.py
 
