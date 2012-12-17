@@ -135,14 +135,28 @@ def install_tukey():
     run_command([WITH_VENV, 'python', 'setup.py', 'develop'], cwd=ROOT)
 
 def install_database():
-    print 'Installing database requires sudo and psql tcp connections'
-    cmd = ['tools/create_db.sh', local_settings.AUTH_DB_PASSWORD]
-    run_command(cmd, cwd=ROOT)
+    if local_settings.AUTH_DB_PASSWORD.strip(): 
+        print 'Installing database requires sudo and psql tcp connections'
+        cmd = ['tools/create_db.sh', local_settings.AUTH_DB_PASSWORD]
+        run_command(cmd, cwd=ROOT)
+    else:
+        sys.stderr.write('Database not created.')
+        sys.stderr.write('Password is blank:')
+        sys.stderr.wirte('please set AUTH_DB_PASSWORD in local_settings file')
 
 def create_log_dir():
-    print 'Creating log dir requires sudo'
-    cmd = ['tools/create_log_dir.sh', local_settings.LOG_DIR, local_settings.USER]
-    run_command(cmd, cwd=ROOT) 
+    if not local_settings.LOG_DIR.strip():
+        sys.stderr.write('No log directory created.')
+        sys.stderr.write('Log directory is blank:')
+        sys.stderr.wirte('please set LOG_DIR in local_settings file')
+    elif not local_settings.USER.strip():
+        sys.stderr.write('No log directory created.')
+        sys.stderr.write('User is blank:')
+        sys.stderr.wirte('please set USER in local_settings file')
+    else: 
+        print 'Creating log dir requires sudo'
+        cmd = ['tools/create_log_dir.sh', local_settings.LOG_DIR, local_settings.USER]
+        run_command(cmd, cwd=ROOT)
 
 
 def print_summary():
