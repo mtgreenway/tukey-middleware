@@ -1,13 +1,16 @@
+# for login node
+
 [commands]
 basedir=/home/ubuntu
+middledir=%(basedir)s/tukey-middleware-1
 fingerprint='FC9B3EC071DE820529E974BDF28152B028BC3A6D'
 gpg_home=%(basedir)s/.gnupg
 passphrase='tukey'
 # use local mounted glusterfs
 host=127.0.0.1:5005
-keyfile=%(basedir)s/tukey/tukey-middleware/tukey_cli/etc/keys/tukey.pub
+keyfile=%(middledir)s/tukey_cli/etc/keys/tukey.pub
 
-script_file=%(basedir)s/tukey/tukey-middleware/auth_proxy/ssh_gen.py
+script_file=%(middledir)s/auth_proxy/ssh_gen.py
 script=python %(script_file)s %(fingerprint)s %(gpg_home)s %(passphrase)s %(host)s %(keyfile)s
 
 resource=sullivan
@@ -37,7 +40,8 @@ cloud_id: loginsullivan
 
 [enabled]
 command: if [ '${sullivan/access/user/username}' = '$'{sullivan/access/user/username} ]; then
-	false
+        false
     else
-	true
+        true
     fi
+

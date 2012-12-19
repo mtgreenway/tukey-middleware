@@ -56,3 +56,10 @@ API_HOST = '127.0.0.1'
 # Required for Swift somehow this will be determined
 # at OpenStack cloud install time
 MEMBER_ROLE_ID = "7cc444dd12f4413c90f1f19e3c109f99"
+
+# for the ssh key generation service
+KEY_SERVER_HOME_DIR = '/home/'
+KEY_SERVER_GPG_HOME = '/root/.gnupg'
+KEY_SERVER_PASSPHRASE = ''
+KEY_SERVER_KEY_FILE = '.ssh/authorized_keys'
+

@@ -70,7 +70,8 @@ class OpenStackApiProxy(object):
 
             global_values[TukeyCli.GLOBAL_SECTION]['method'] = req.method
             global_values[TukeyCli.GLOBAL_SECTION]['auth-token'] = auth_token
-            global_values[TukeyCli.GLOBAL_SECTION]['auth-project-id'] = req.headers['x-auth-project-id']
+            if 'x-auth-project-id' in req.headers:
+                global_values[TukeyCli.GLOBAL_SECTION]['auth-project-id'] = req.headers['x-auth-project-id']
         
 
             global_values[TukeyCli.GLOBAL_SECTION].update(req.params)
