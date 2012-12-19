@@ -23,12 +23,32 @@ USER = 'ubuntu'
 # Directory to write logs to
 LOG_DIR = '/var/log/tukey/'
 
-# Server running the default keystone if there is one
-KEYSTONE_HOST = '10.103.114.3'
-
 # If you have setup an external usage service
 USAGE_DB_PASSWORD = ''
+USAGE_DB_USERNAME = 'console_ro'
+USAGE_DB_NAME = 'dashboard'
+
 USAGE_DB_HOST = '10.103.112.1'
+
+USAGE_RESOURCES = {
+    'cloud': {
+        'adler': 'OSDC Cloud2',
+        'sullivan': 'OSDC-Sullivan'
+    },
+    'hadoop': {
+        name.replace('-','_').lower(): name for name in [
+            'OCC-Y', 'OCC-LVOC-HADOOP']
+    }
+}
+
+USAGE_ATTRIBUTES = {
+    'hadoop': ['jobs', 'hdfsdu'],
+    'cloud': ['du', 'cores', 'ram']
+}
+
+
+# Server running the default keystone if there is one
+KEYSTONE_HOST = '10.103.114.3'
 
 # The host API proxies will be running on
 API_HOST = '127.0.0.1'
@@ -36,4 +56,3 @@ API_HOST = '127.0.0.1'
 # Required for Swift somehow this will be determined
 # at OpenStack cloud install time
 MEMBER_ROLE_ID = "7cc444dd12f4413c90f1f19e3c109f99"
-

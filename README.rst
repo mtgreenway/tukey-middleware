@@ -31,11 +31,23 @@ For Ubuntu use apt to install::
 Getting Started
 ===============
 
+Before installing you will need to copy local/local_settings.py.example
+to local/local_settings.py and put in the values for your cloud.
+
 For local development, first create a virtualenv for the project.
-In the ``tools`` directory there is a script to create one for you::
+In the ``tools`` directory there is a script to create one for you.
+This script not only creates the virtualenv but it will also call two
+additional scripts for setting up the database and the log directories
+tools/create_db.sh and tools/create_log.sh respectively.  Both of these
+scripts require sudo access and may need to modified to meet the
+requirements of your system.::
 
   $ python tools/install_venv.py
 
+M2Crypto usually has problems so you may need to copy the systemwide so
+from somewhere like:
+/usr/lib/python2.7/dist-packages/M2Crypto/__m2crypto.so to the the venv
+installation.
 
 There are three main proxies you will need to start: the authentication
 service the nova proxy and the glance proxy
@@ -44,6 +56,23 @@ Run the start up scripts for each service::
   $ ./auth.sh
   $ ./nova.sh
   $ ./glance.sh
+
+
+SSH Key Creation Service
+========================
+
+This requires gnupg.  Generate keyspairs on the tukey server
+and the login server.  Put the tukey-server's public key in
+tukey_cli/etc/keys.
+
+To run the ssh-key creation service install tukey-middleware on the
+login node server then as a user that has write permissions to all
+users .ssh directories::
+
+    # source .venv/bin/activate
+    # cd auth_proxy 
+    # python key_server.py 127.0.0.1 5005 PATH_TO_HOME
+
 
 Configuration
 =============
@@ -60,3 +89,21 @@ A full documentation will be available soon.
 
 Please contact Matthew Greenway mgreenway@uchicago.edu with any 
 questions.
+
+
+Eucalyptus
+==========
+
+Eucalyptus requires a directory that contains users euca credentials.
+By default this is expected to /var/lib/cloudgui/users/
+For example a eucalyptus user mgreenway would need to have
+/var/lib/cloudgui/users/mgreenway/.euca/eucarc
+
+Creating Users
+==============
+
+There is a create_tukey_user.py script to create and delete users::
+    $ python create_tukey_user.py CLOUD METHOD IDENTIFIER USERNAME PASSWORD
+
+Currently method needs to be openid or shibboleth.  For Eucalyptus users
+the password will do nothing.

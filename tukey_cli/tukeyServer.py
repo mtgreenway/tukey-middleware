@@ -57,7 +57,9 @@ class OpenStackApiProxy(object):
             # Load default JSON transformer
             cli = TukeyCli(jsonTrans())
 
-            values = self.mc.get(req.headers['x-auth-token'])
+            auth_token = req.headers['x-auth-token']
+
+            values = self.mc.get(auth_token)
 
             self.logger.debug(values)
             
@@ -67,6 +69,9 @@ class OpenStackApiProxy(object):
             global_values[TukeyCli.GLOBAL_SECTION].update(values)
 
             global_values[TukeyCli.GLOBAL_SECTION]['method'] = req.method
+            global_values[TukeyCli.GLOBAL_SECTION]['auth-token'] = auth_token
+            global_values[TukeyCli.GLOBAL_SECTION]['auth-project-id'] = req.headers['x-auth-project-id']
+        
 
             global_values[TukeyCli.GLOBAL_SECTION].update(req.params)
 

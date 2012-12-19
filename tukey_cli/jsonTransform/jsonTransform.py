@@ -219,7 +219,7 @@ class Transformer(object):
 	'''
 	    retturn an empty json list
 	'''
-	return []
+	return '[]'
 
     def empty(self):
         '''

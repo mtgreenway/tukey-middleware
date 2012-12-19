@@ -227,6 +227,36 @@ def disable_all():
     run_statements(["DELETE FROM login_enabled;",
         "DELETE FROM login_identifier_enabled;"])
 
+def disable_login(username, cloud):
+
+    run_statements(["""DELETE FROM login_enabled
+        USING login, cloud WHERE login.id=login_enabled.login_id
+        and login.cloud_id=cloud.cloud_id
+        and login.username='%(username)s' and cloud.name='%(cloud)s'"""
+        % locals()])
+
+def delete_login(username, cloud):
+
+    run_statements(["""DELETE FROM login
+        USING cloud WHERE login.cloud_id=cloud.cloud_id
+        and login.username='%(username)s' and cloud.name='%(cloud)s'"""
+        % locals()])
+
+def disable_identifier(identifier):
+
+    run_statements(["""DELETE FROM login_identifier_enabled
+        USING login_identifier WHERE
+        login_identifier.identifier='%(identifier)s'
+        and login_identifier.id = login_identifier_enabled.login_identifier_id;"""
+        % locals()])
+
+def delete_identifier(identifier):
+
+    run_statements(["""DELETE FROM login_identifier
+        WHERE login_identifier.identifier='%(identifier)s'"""
+        % locals()])
+
+
 
 if __name__ == "__main__":
 
@@ -235,12 +265,15 @@ use: %prog -d to disable all accounts"""
 
     parser = optparse.OptionParser(usage)
 
-    parser.add_option("-d", "--disable",
-        action="store_true", dest="disable")
+    parser.add_option("-d", "--disable-all",
+        action="store_true", dest="disable_all")
+
+#    parser.add_option("-d", "--disable",
+#        action="store_true", dest="disable")
 
     (options, args) = parser.parse_args()
 
-    if options.disable:
+    if options.disable_all:
         disable_all()
     
     else:

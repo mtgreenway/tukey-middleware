@@ -41,7 +41,7 @@ class TukeyCli(object):
 
     __COMMAND_SECTION   = 'commands'
     __ENABLED_SECTION   = 'enabled'
-    __PROXY_SECTION	= 'proxy'
+    __PROXY_SECTION     = 'proxy'
     __CHECK_COMMAND     = 'command'
     __VAR_BEG           = '${'
     __VAR_END           = '}'
@@ -54,7 +54,7 @@ class TukeyCli(object):
     # since config file comments start  with a hash we cant have a 
     # legitimate command starting with
     #
-    __PROXY_COMMAND	= '#proxy'
+    __PROXY_COMMAND     = '#proxy'
 
     def __init__(self, trans):
         '''
@@ -153,36 +153,36 @@ class TukeyCli(object):
  
     
     def _replace_var(self, token, string, values):
-	'''
-	    to recursively traverse dictionaries and replace the 
-	    sweet value within
-	'''
+        '''
+            to recursively traverse dictionaries and replace the 
+            sweet value within
+        '''
         beg = TukeyCli.__VAR_BEG
         end = TukeyCli.__VAR_END
 
-	for (key, value) in values:
-	    if hasattr(value, 'items'):
-		string = self._replace_var(token + str(key) + '/' , string, value.items())
+        for (key, value) in values:
+            if hasattr(value, 'items'):
+                string = self._replace_var(token + str(key) + '/' , string, value.items())
 
-	    new_token = beg + token + str(key) + end
+            new_token = beg + token + str(key) + end
 
-	    string = string.replace(new_token, str(value))
+            string = string.replace(new_token, str(value))
 
-	return string
+        return string
 
        
     def replace_var(self, string, values):
         '''
             find for each values.keys() surrounded by begin and end 
-	    symbols then replace it with values[name]
+            symbols then replace it with values[name]
         '''
         beg = TukeyCli.__VAR_BEG
         end = TukeyCli.__VAR_END
         
         for (key, value) in values.items():
-	    if hasattr(value, 'items'):
-		string = self._replace_var(str(key) + '/', string, value.items())
-    		
+            if hasattr(value, 'items'):
+                string = self._replace_var(str(key) + '/', string, value.items())
+                    
             token = beg + str(key) + end
             string = string.replace(token, str(value)) 
        
@@ -245,15 +245,11 @@ class TukeyCli(object):
         
         for option in section:
             path = config.get(section_name, option)
-	    if ' ' in option:
-    	    	split_option = option.split(' ')
-		option = ':'.join([split_option[0].upper(), split_option[1]])
+            if ' ' in option:
+                split_option = option.split(' ')
+                option = ':'.join([split_option[0].upper(), split_option[1]])
 
-	    #print "JSON STRING BEFORE TRANSFORM", json_string
-	    
             json_string = self.trans.transform_list(json_string, option, path)
-
-	    #print "JSON STRING AT END OF TRANSFORM", json_string
             
         return self.replace_var(json_string, values)
      
@@ -315,8 +311,8 @@ class TukeyCli(object):
         
         if single:
             results = {}
-	else:
-	    results = []
+        else:
+            results = []
         
         for (site, cmd) in commands.items():
             try:
@@ -326,7 +322,7 @@ class TukeyCli(object):
                 sections = config.sections()
 
                 if cmd == TukeyCli.__PROXY_COMMAND:
-		    host = config.get(TukeyCli.__PROXY_SECTION, 'host')
+                    host = config.get(TukeyCli.__PROXY_SECTION, 'host')
                     raw_output = proxy_method(host)
                 else:
                     p = Popen(cmd, shell=True, executable='/bin/bash', stdout=PIPE, stderr=PIPE)
@@ -337,7 +333,7 @@ class TukeyCli(object):
 
                 result = self.transform(result, site, command_name, 
                                         self.__site_values(site, values))
-                                
+
             except Exception, e:
                 result = self.set_error(site, command_name, str(e))
                 
@@ -346,15 +342,16 @@ class TukeyCli(object):
                 if result == '':
                     error = raw_output + stderr
                     result = self.set_error(site, command_name, error)
-                
+
                 result = self.tag(result, site)
-		
+                
                 if not single:
                     results += self.trans.decode(result)
                 elif result != self.trans.empty_none() and result != self.trans.empty():
                     results = self.trans.decode(result)
-		    if len(results) > 0:
-			results = results[0]
+                    if len(results) > 0:
+                        results = results[0]
+                        
         
         if object_name is not None:
             results = {object_name: results}

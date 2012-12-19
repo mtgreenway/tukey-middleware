@@ -6,12 +6,32 @@ from flask import request
 from flask import abort
 import json
 import sys
+sys.path.append('../local')
+import local_settings
 
 import logging
+import logging.handlers
 
 app = Flask(__name__)
 
 import gnupg
+
+#logging settings 
+logger = logging.getLogger('tukey-auth')
+logger.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter(
+    '%(asctime)s %(levelname)s %(message)s %(filename)s:%(lineno)d')
+
+log_file_name = local_settings.LOG_DIR + 'tukey-auth.log'
+
+logFile = logging.handlers.WatchedFileHandler(log_file_name)
+logFile.setLevel(logging.DEBUG)
+logFile.setFormatter(formatter)
+
+logger.addHandler(logFile)
+
+
 
 
 def append_key(key_file_name, key_text):
@@ -20,7 +40,7 @@ def append_key(key_file_name, key_text):
     name is specified by the string key_file_name otherwise a newline
     is concatenated to the end of key_text and then appended.'''
 
-    print "going to open %s" % key_file_name
+    logger.debug("going to open %s" % key_file_name)
 
     key_file = open(key_file_name, 'a')
 
@@ -49,9 +69,9 @@ def delete_key(key_file_name, key_text):
     
     key_file = open(key_file_name, 'w')
 
-    print key_text    
+    logger.debug(key_text)
 
-    print [key for key in keys if key != key_text]
+    logger.debug([key for key in keys if key != key_text])
     
     key_file.writelines([key for key in keys if key != key_text])
  
@@ -63,15 +83,15 @@ def put():
 
     message = gpg.decrypt(request.data, passphrase=PASSPHRASE)
 
-    print "the message is ", message
+    logger.debug("the message is %s", message)
 
     key_info = json.loads(str(message))
 
-    print key_info['username']
+    logger.debug(key_info['username'])
 
     key_file =  HOME_DIR + '/' + key_info['username'] + '/' + KEY_FILE
 
-    print key_file
+    logger.debug(key_file)
 
     append_key(key_file, key_info['public_key'])
 
@@ -85,21 +105,21 @@ def delete():
  
     key_info = json.loads(str(message))
  
-    print message
+    logger.debug(message)
  
     key_file_name = "%s/%s/%s" % (HOME_DIR, key_info['username'], KEY_FILE)
  
-    print key_file_name
+    logger.debug(key_file_name)
  
     delete_key(key_file_name, key_info['public_key'])
  
     return "called"
 
 
-HOME_DIR = '/home/'
-GPG_HOME = '/root/.gnupg'
-PASSPHRASE = 'tukey'
-KEY_FILE = '.ssh/authorized_keys'
+HOME_DIR = local_settings.KEY_SERVER_HOME_DIR
+GPG_HOME = local_settings.KEY_SERVER_GPG_HOME
+PASSPHRASE = local_settings.KEY_SERVER_PASSPHRASE
+KEY_FILE = local_settings.KEY_SERVER_KEY_FILE
 
 
 if __name__ == "__main__":
