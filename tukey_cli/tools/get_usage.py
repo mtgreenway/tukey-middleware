@@ -26,8 +26,6 @@ logFile.setFormatter(formatter)
 
 logger.addHandler(logFile)
 
-
-
 def time_to_unix(time_str):
     format_str = '%Y-%m-%dT%H:%M:%S.%f'
 

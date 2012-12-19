@@ -8,6 +8,8 @@ from local import local_settings
 
 logger = logging.getLogger(__name__)
 
+verbose = False
+
 def connect():
     conn_template = "dbname='%s' user='%s' host='%s' password='%s'"
     db_name = 'federated_auth'
@@ -44,8 +46,9 @@ def connect_and_query(cur, query):
 
 
 def exists_query(cur, query):
-    
-    print query
+
+    if verbose:
+        print query
 
     return connect_and_query(cur, query)[0] > 0
 
@@ -159,6 +162,61 @@ def add_account(cloud, username, password, method, identifier):
     ]
 
 
+# deletion statements
+
+def disable_login(username, cloud):
+
+    return ["""DELETE FROM login_enabled
+        USING login, cloud WHERE login.id=login_enabled.login_id
+        and login.cloud_id=cloud.cloud_id
+        and login.username='%(username)s' and cloud.cloud_name='%(cloud)s';"""
+        % locals()]
+
+
+def delete_login(username, cloud):
+
+    return ["""DELETE FROM login
+        USING cloud WHERE login.cloud_id=cloud.cloud_id
+        and login.username='%(username)s' and cloud.cloud_name='%(cloud)s';"""
+        % locals()]
+
+
+def disable_identifiers(username, cloud):
+
+    return ["""DELETE FROM login_identifier_enabled
+        USING login_identifier, login, cloud WHERE
+        login_identifier.userid = login.userid 
+        and login.username = '%(username)s' and login.cloud_id = cloud.cloud_id
+        and cloud.cloud_name = '%(cloud)s'
+        and login_identifier.id = login_identifier_enabled.login_identifier_id;"""
+        % locals()]
+
+
+def delete_identifiers(username, cloud):
+
+    return ["""DELETE FROM login_identifier
+        USING login, cloud WHERE
+        login_identifier.userid = login.userid 
+        and login.username = '%(username)s' and login.cloud_id = cloud.cloud_id
+        and cloud.cloud_name = '%(cloud)s';"""
+        % locals()]
+
+
+def disable_identifier(identifier):
+
+    return ["""DELETE FROM login_identifier_enabled
+        USING login_identifier WHERE
+        login_identifier.identifier='%(identifier)s'
+        and login_identifier.id = login_identifier_enabled.login_identifier_id;"""
+        % locals()]
+
+
+def delete_identifier(identifier):
+
+    return ["""DELETE FROM login_identifier
+        WHERE login_identifier.identifier='%(identifier)s'"""
+        % locals()]
+
 
 def run_statements(statements):
     conn = connect()
@@ -166,7 +224,8 @@ def run_statements(statements):
 
     try:
         for statement in statements:
-            print statement
+            if verbose:
+                print statement
             cur.execute(statement)
 
         conn.commit()
@@ -222,60 +281,57 @@ def process_account(cloud, method, identifier, username, password):
     run_statements(statements)
 
 
+def delete_account(cloud, username):
+
+    run_statements(
+	disable_identifiers(username, cloud) +
+	delete_identifiers(username, cloud) +
+	disable_login(username, cloud) +
+	delete_login(username, cloud))
+
+
 def disable_all():
 
     run_statements(["DELETE FROM login_enabled;",
         "DELETE FROM login_identifier_enabled;"])
 
-def disable_login(username, cloud):
-
-    run_statements(["""DELETE FROM login_enabled
-        USING login, cloud WHERE login.id=login_enabled.login_id
-        and login.cloud_id=cloud.cloud_id
-        and login.username='%(username)s' and cloud.name='%(cloud)s'"""
-        % locals()])
-
-def delete_login(username, cloud):
-
-    run_statements(["""DELETE FROM login
-        USING cloud WHERE login.cloud_id=cloud.cloud_id
-        and login.username='%(username)s' and cloud.name='%(cloud)s'"""
-        % locals()])
-
-def disable_identifier(identifier):
-
-    run_statements(["""DELETE FROM login_identifier_enabled
-        USING login_identifier WHERE
-        login_identifier.identifier='%(identifier)s'
-        and login_identifier.id = login_identifier_enabled.login_identifier_id;"""
-        % locals()])
-
-def delete_identifier(identifier):
-
-    run_statements(["""DELETE FROM login_identifier
-        WHERE login_identifier.identifier='%(identifier)s'"""
-        % locals()])
 
 
 
 if __name__ == "__main__":
 
-    usage = """usage: %prog [options] [cloud method identifer username password]
-use: %prog -d to disable all accounts"""
+    usage = """To create a user: %prog [-v] [cloud method identifer username password]
+To disable all accounts: %prog [-v] -d 
+To delete a user: %prog [-v] -r [cloud username]"""
 
     parser = optparse.OptionParser(usage)
 
     parser.add_option("-d", "--disable-all",
         action="store_true", dest="disable_all")
 
-#    parser.add_option("-d", "--disable",
-#        action="store_true", dest="disable")
+    parser.add_option("-r", "--remove-user",
+        action="store_true", dest="remove")
+
+    parser.add_option("-v", "--verbose",
+        action="store_true", dest="verbose")
 
     (options, args) = parser.parse_args()
 
+    verbose = options.verbose
+
     if options.disable_all:
+	if len(args) != 0:
+            parser.error("incorrect number of arguments")
+            exit(1)
         disable_all()
+
+    elif options.remove:
+        if len(args) != 2:
+            parser.error("incorrect number of arguments")
+            exit(1)
+        delete_account(args[0], args[1] )
     
+
     else:
         if len(args) != 5:
             parser.error("incorrect number of arguments")
