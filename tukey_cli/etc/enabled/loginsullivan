@@ -11,7 +11,7 @@ host=127.0.0.1:5005
 keyfile=%(middledir)s/tukey_cli/etc/keys/tukey.pub
 
 script_file=%(middledir)s/auth_proxy/ssh_gen.py
-script=python %(script_file)s %(fingerprint)s %(gpg_home)s %(passphrase)s %(host)s %(keyfile)s
+script=%(middledir)s/tools/with_venv.sh python %(script_file)s %(fingerprint)s %(gpg_home)s %(passphrase)s %(host)s %(keyfile)s
 
 resource=sullivan
 username=${sullivan/access/user/username}

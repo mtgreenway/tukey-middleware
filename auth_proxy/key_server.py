@@ -1,38 +1,22 @@
 # mgreenway 2012
 # Apache 2 ????
 
-from flask import Flask
-from flask import request
-from flask import abort
-import json
-import sys
-sys.path.append('../local')
-import local_settings
+from flask import Flask, request, abort
+from logging_settings import get_logger
+from logging_settings import get_logger
 
-import logging
-import logging.handlers
+import gnupg
+import json
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../local')
+import local_settings
 
 app = Flask(__name__)
 
-import gnupg
-
 #logging settings 
-logger = logging.getLogger('tukey-auth')
-logger.setLevel(logging.DEBUG)
-
-formatter = logging.Formatter(
-    '%(asctime)s %(levelname)s %(message)s %(filename)s:%(lineno)d')
-
-log_file_name = local_settings.LOG_DIR + 'tukey-auth.log'
-
-logFile = logging.handlers.WatchedFileHandler(log_file_name)
-logFile.setLevel(logging.DEBUG)
-logFile.setFormatter(formatter)
-
-logger.addHandler(logFile)
-
-
-
+logger = get_logger()
 
 def append_key(key_file_name, key_text):
     ''' Appends key key_text to authorized_keys file key_file_name.

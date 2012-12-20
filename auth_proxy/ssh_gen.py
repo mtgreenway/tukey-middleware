@@ -1,40 +1,24 @@
-from M2Crypto import DSA, BIO
-from subprocess import Popen, PIPE
-import sys
-import tempfile
-import os
-import json
 import gnupg
 import httplib
+import json
+import os
+import sys
+import tempfile
 
 from ConfigParser import ConfigParser
-
-from psycopg2 import IntegrityError
-
+from M2Crypto import DSA, BIO
 from auth_db import insert_sshkey, delete_sshkey, get_keypairs, get_keypair
+from logging_settings import get_logger
+from psycopg2 import IntegrityError
+from subprocess import Popen, PIPE
 
-import logging
-import logging.handlers
-
-import sys
-sys.path.append('../local')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../local')
 import local_settings
 
-
 #logging settings 
-logger = logging.getLogger('tukey-auth')
-#logger.setLevel(logging.DEBUG)
+logger = get_logger()
 
-formatter = logging.Formatter(
-    '%(asctime)s %(levelname)s %(message)s %(filename)s:%(lineno)d')
-
-log_file_name = local_settings.LOG_DIR + 'tukey-auth.log'
-
-logFile = logging.handlers.WatchedFileHandler(log_file_name)
-#logFile.setLevel(logging.DEBUG)
-logFile.setFormatter(formatter)
-
-logger.addHandler(logFile)
+SSH_KEYGEN = local_settings.SSH_KEYGEN_COMMAND
 
 
 def run_ssh_on_string(command, string):
@@ -67,7 +51,7 @@ def generate_keypair(password=None):
     
     dsa.save_pub_key_bio(mem_pub)
     
-    public_key = run_ssh_on_string("ssh-keygen -f %s -i -m PKCS8",
+    public_key = run_ssh_on_string(SSH_KEYGEN + " -f %s -i -m PKCS8",
         mem_pub.getvalue())[:-1]
     return public_key, private_key
 
@@ -103,22 +87,23 @@ def send_to_host(username, public_key, method='PUT'):
     message = gpg.encrypt(raw_message, recipient, always_trust=True,
         sign=fingerprint, passphrase=passphrase)
 
-
-    logger.debug(message)
-
+    logger.debug("host: %s", host)
     conn = httplib.HTTPConnection(host)
     conn.request(method, '/', str(message))
     resp = conn.getresponse()
+
     if resp.status != 200:
-	raise
+        raise
     content = resp.read()
+
+    logger.debug("content %s", content)
 
     return content
 
 
 def populate_key(cloud, username, keyname, public_key, private_key=''):
 
-    fingerprint = run_ssh_on_string("ssh-keygen -lf %s", public_key).split(
+    fingerprint = run_ssh_on_string(SSH_KEYGEN + " -lf %s", public_key).split(
         ' ')[1]
 
     logger.debug(fingerprint)
@@ -128,6 +113,7 @@ def populate_key(cloud, username, keyname, public_key, private_key=''):
 
         try:
             send_to_host(username, public_key)
+
     
             print json.dumps([{
                 "keypair": {
@@ -141,10 +127,10 @@ def populate_key(cloud, username, keyname, public_key, private_key=''):
 
         except:
             delete_sshkey(cloud, username, keyname)
-            print '{"keypair": {"message": "Key pair \'%s\' could not be created.", "code": 409}}' % keyname
+            print '{"message": "Key pair \'%s\' could not be created.", "code": 409}' % keyname
         
     except IntegrityError:
-        print '{"keypair": {"message": "Key pair \'%s\' already exists.", "code": 409}}' % keyname
+        print '{"message": "Key pair \'%s\' already exists.", "code": 409}' % keyname
     
 
 def main():
@@ -170,7 +156,9 @@ def main():
     
     elif option == 'import':
         keyname = sys.argv[9]
-        public_key = sys.argv[10]
+        public_key = ' '.join(sys.argv[10:])
+
+        logger.debug(public_key)
         
         populate_key(cloud, username, keyname, public_key)
 
@@ -184,9 +172,9 @@ def main():
             send_to_host(username, public_key, method='DELETE')
             if not delete_sshkey(cloud, username, keyname):
                 send_to_host(username, public_key)
-                print '{"keypair": {"message": "Key pair \'%s\' could not be deleted.", "code": 409}}' % keyname
+                print '{"message": "Key pair \'%s\' could not be deleted.", "code": 409}' % keyname
         except:
-            print '{"keypair": {"message": "Key pair \'%s\' could not be deleted.", "code": 409}}' % keyname
+            print '{"message": "Key pair \'%s\' could not be deleted.", "code": 409}' % keyname
 
     elif option == 'list':
         print json.dumps(get_keypairs(cloud, username))

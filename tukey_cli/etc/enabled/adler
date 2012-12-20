@@ -3,8 +3,9 @@ driver: EucalyptusAuth
 
 [commands]
 # Variables used for the commands
-compute=python tools/eucalyptus/compute.py
-storage=python tools/eucalyptus/storage.py
+command_base=/home/ubuntu/tukey-middleware-1/tukey_cli/
+venv=/home/ubuntu/tukey-middleware-1/tools/with_venv.sh
+compute=%(venv)s python %(command_base)stools/eucalyptus/compute.py
 
 basedir=/var/lib/cloudgui/users/
 cred_file=%(basedir)s${username}/.euca/eucarc
@@ -26,9 +27,9 @@ servers: if [ '${method}' = 'DELETE' ]; then
 	    %(compute)s %(creds)s --list instances --id ${id}
 	fi
 
-flavors/detail: python tools/eucalyptus/adler_flavors.py
+flavors/detail: %(venv)s python %(command_base)stools/eucalyptus/adler_flavors.py
 
-flavors: python tools/eucalyptus/adler_flavors.py ${id}
+flavors: %(venv)s python %(command_base)stools/eucalyptus/adler_flavors.py ${id}
 
 images/detail: if [ "${property-image_type}" = 'snapshot' ];then
 		#echo '[{"id":""}]'
@@ -61,9 +62,9 @@ os-keypairs: if [ '${method}' = 'POST' ]; then
 	fi
 
 
-os-quota-sets: python tools/eucalyptus/get_quota.py 10.103.112.3 9402 ${username}
+os-quota-sets: %(venv)s python %(command_base)stools/eucalyptus/get_quota.py 10.103.112.3 9402 ${username}
 
-os-simple-tenant-usage: python tools/get_usage.py sullivan ${start} ${end} ${username} ${access/user/username}
+os-simple-tenant-usage: %(venv)s python %(command_base)stools/get_usage.py sullivan ${start} ${end} ${username} ${access/user/username}
 
 [transformations:listSizes]
 id:	name

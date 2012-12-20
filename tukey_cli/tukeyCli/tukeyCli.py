@@ -266,7 +266,8 @@ class TukeyCli(object):
             return json_string
         
         for option in config.options(tag_section):
-            json_string = self.trans.add_attr_list(json_string, option, config.get(tag_section,option))
+            # Check if it is singular or not
+            json_string = self.trans.add_attr(json_string, option, config.get(tag_section,option))
             
         return json_string
             
@@ -291,7 +292,7 @@ class TukeyCli(object):
         else:
             error_name = TukeyCli.__DEFAULT_ERROR
             
-        new_list = self.trans.add_attr_list(new_list, error_name, error)
+        new_list = self.trans.add_attr(new_list, error_name, error)
         
         return new_list
         
@@ -349,8 +350,12 @@ class TukeyCli(object):
                     results += self.trans.decode(result)
                 elif result != self.trans.empty_none() and result != self.trans.empty():
                     results = self.trans.decode(result)
-                    if len(results) > 0:
+                    try:
                         results = results[0]
+                    except IndexError: 
+                        pass
+                    except KeyError:
+                        pass
                         
         
         if object_name is not None:

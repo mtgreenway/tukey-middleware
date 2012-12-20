@@ -1,30 +1,28 @@
 import json
+import logging
+import logging.handlers
+import os
 import sys
 import time
 
-import logging
-import logging.handlers
-
-import psycopg2
-
-
-sys.path.append('../local')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../local')
 import local_settings
 
-
 logger = logging.getLogger('tukey-usage')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(local_settings.LOG_LEVEL)
 
-formatter = logging.Formatter(
-    '%(asctime)s %(levelname)s %(message)s %(filename)s:%(lineno)d')
+formatter = logging.Formatter(local_settings.LOG_FORMAT)
 
 log_file_name = local_settings.LOG_DIR + 'tukey-usage.log'
 
 logFile = logging.handlers.WatchedFileHandler(log_file_name)
-logFile.setLevel(logging.DEBUG)
 logFile.setFormatter(formatter)
 
 logger.addHandler(logFile)
+
+logger.debug("TEST")
+
+import psycopg2
 
 def time_to_unix(time_str):
     format_str = '%Y-%m-%dT%H:%M:%S.%f'

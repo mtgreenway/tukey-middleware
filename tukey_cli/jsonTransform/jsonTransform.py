@@ -185,7 +185,7 @@ class Transformer(object):
     
         return json.dumps(j_objs)
     
-    def add_attr(self, json_string, attr, value):
+    def add_attr_single(self, json_string, attr, value):
         '''
             json_string is json object.  Returns the
             attr with value as a json string
@@ -196,6 +196,14 @@ class Transformer(object):
         
         return json.dumps(j_obj)
         
+    def add_attr(self, json_string, attr, value):
+        '''
+            check if is singular or list then add the attribute
+            to each element or the object
+        '''
+        if json_string.strip()[0] == '[':
+            return self.add_attr_list(json_string, attr, value)
+        return self.add_attr_single(json_string, attr, value)
     
     def strip(self, json_string, value):
         '''
