@@ -71,7 +71,7 @@ CREATE TABLE keypair (
     pubkey text,
     cloud_id integer,
     fingerprint character varying(48),
-    name character varying(16)
+    name character varying(21)
 );
 
 

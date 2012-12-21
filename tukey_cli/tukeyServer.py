@@ -13,19 +13,19 @@
 #    under the License.
 
 
-from tukeyCli.tukeyCli import TukeyCli
 from jsonTransform.jsonTransform import Transformer as jsonTrans
-from webob import exc
-from webob import Request, Response
+from tukeyCli.tukeyCli import TukeyCli
+from webob import exc, Request, Response
 
 import httplib
 import json
 import logging
 import logging.handlers
 import memcache
+import os
 import sys
 
-sys.path.append('../local')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../local')
 import local_settings
 
 
@@ -51,8 +51,9 @@ class OpenStackApiProxy(object):
         req = Request(environ)
         try:
             
-            #TODO: this definitely shouldnt be relative
-            conf_dir = '/home/ubuntu/tukey-middleware-1/tukey_cli/etc/enabled/'
+            # TODO: should probably pass this in from
+            # the outside
+            conf_dir = local_settings.CONF_DIR
 
             # Load default JSON transformer
             cli = TukeyCli(jsonTrans())
@@ -65,8 +66,6 @@ class OpenStackApiProxy(object):
             
             command = self.__path_to_command(req.path)
             global_values = self.__path_to_params(req.path)
-
-            print "path: ", req.path
 
             global_values[TukeyCli.GLOBAL_SECTION].update(values)
 
@@ -132,9 +131,13 @@ class OpenStackApiProxy(object):
                 single=is_single, 
                 proxy_method=self.openstack_proxy(req, path))
 
+            logger.debug(result)
+
             result = self.remove_error(name, result)
             
             result = self.apply_os_exceptions(command, result)
+
+            logger.debug(result)
             
             resp = Response(result)
 

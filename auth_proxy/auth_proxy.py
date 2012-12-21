@@ -13,23 +13,23 @@
 #    under the License.
 
 
-from auth_system import OpenStackAuth, EucalyptusAuth
-from webob import exc
-from webob import Request, Response
-from ConfigParser import ConfigParser
-from glob import glob
-from os import path, sep
-
 import httplib
 import json
-import memcache
 import logging
 import logging.handlers
-
+import memcache
+import os
 import sys
-sys.path.append('../local')
-import local_settings
 
+from ConfigParser import ConfigParser
+from auth_system import OpenStackAuth, EucalyptusAuth
+from glob import glob
+from os import path, sep
+from webob import Request, Response
+from webob import exc
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../local')
+import local_settings
 
 
 class AuthProxy(object):
@@ -137,7 +137,8 @@ class AuthProxy(object):
         user_info = self.mc.get(str(token))
 
         if self.__is_openstack(user_info):
-            del(req.headers['Content-Length'])
+            if 'Content-Length' in req.headers:
+                del(req.headers['Content-Length'])
             resp = self.__forward("GET", req.path, "", req.headers)
         else:
             resp = self.__json_response(user_info['fake_tenant'])
@@ -339,7 +340,7 @@ if __name__ == '__main__':
         help='Keystone host (default %s)' % local_settings.KEYSTONE_HOST)
 
     parser.add_option(
-        '-c', '--config_dir', default='../tukey_cli/etc/enabled',
+        '-c', '--config_dir', default=local_settings.CONF_DIR,
         dest='config_dir', type='str',
         help='Directory containing Tukey site configs (default ../tukey_cli/etc/enabled)')
 

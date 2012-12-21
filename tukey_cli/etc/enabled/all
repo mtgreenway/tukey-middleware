@@ -1,0 +1,36 @@
+# for all
+
+[commands]
+basedir=/home/ubuntu
+venv=/home/ubuntu/tukey-middleware-1/tools/with_venv.sh
+middledir=%(basedir)s/tukey-middleware-1
+
+clouds='["sullivan","loginsullivan"]'
+
+script_file=%(middledir)s/auth_proxy/multiple_keys.py
+script=%(venv)s python %(script_file)s ${auth-project-id} ${auth-token} '${name}' %(clouds)s
+
+os-keypairs: if [ '${method}' = 'POST' ]; then
+                if [ '${public_key}'  = '$'{public_key} ]; then
+                    %(script)s POST
+                else
+                    %(script)s POST '${public_key}'
+                fi
+        elif [ '${method}' = 'DELETE' ]; then
+            %(script)s DELETE
+        fi
+
+[tag]
+cloud: Sullivan Login Node
+
+cloud_name: Sullivan Login Node
+
+cloud_id: loginsullivan
+
+[enabled]
+command: if [ '${sullivan/access/user/username}' = '$'{sullivan/access/user/username} ]; then
+        false
+    else
+        true
+    fi
+

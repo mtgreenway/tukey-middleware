@@ -20,14 +20,20 @@ AUTH_DB_PASSWORD = ''
 # The user Tukey middleware will run as
 USER = 'ubuntu'
 
+# directory with api mapping files
+CONF_DIR = '/home/ubuntu/tukey-middleware-1/tukey_cli/etc/enabled/'
+
 # Directory to write logs to
+import logging
+LOG_LEVEL = logging.INFO
+#LOG_LEVEL = logging.DEBUG
 LOG_DIR = '/var/log/tukey/'
+LOG_FORMAT = '%(asctime)s %(levelname)s %(message)s %(filename)s:%(lineno)d'
 
 # If you have setup an external usage service
 USAGE_DB_PASSWORD = ''
 USAGE_DB_USERNAME = 'console_ro'
 USAGE_DB_NAME = 'dashboard'
-
 USAGE_DB_HOST = '10.103.112.1'
 
 USAGE_RESOURCES = {
@@ -62,4 +68,6 @@ KEY_SERVER_HOME_DIR = '/home/'
 KEY_SERVER_GPG_HOME = '/root/.gnupg'
 KEY_SERVER_PASSPHRASE = ''
 KEY_SERVER_KEY_FILE = '.ssh/authorized_keys'
+
+SSH_KEYGEN_COMMAND = '/usr/bin/ssh-keygen'
 

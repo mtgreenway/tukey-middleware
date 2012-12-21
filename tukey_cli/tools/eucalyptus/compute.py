@@ -49,15 +49,15 @@ def main():
 def resource_by_id(id, resources):
     image = CloudTools.findBy("id", resources, id)
     if image is None:
-	return '[]'
+        return '[]'
     i_dict = image.__dict__
     del i_dict['driver']
     return json.dumps([i_dict])
 
 def keypair_by_name(name, keypairs):
     for key in keypairs:
-	if 'name' in key and key['name'] == name:
-	    return key
+        if 'name' in key and key['name'] == name:
+            return key
 
         
 def api_request(options, conn):
@@ -78,72 +78,79 @@ def api_request(options, conn):
                 '"imagetype": "machine"',
                 '"imagetype":"machine","container_format":"ami"')
 
-	    json_results = json_results.replace('"state": "available"','"state": "active"')
+            json_results = json_results.replace('"state": "available"','"state": "active"')
 
-	    if options.limit:
-		start = 0
-		if options.marker:
-		    if not options.marker.startswith(('emi','eki','eri')):
-			start = limit
-		    else:
-			for index, image in enumerate(json.loads(json_results)):
-			    if image['id'] == options.marker:
-				start = index + 1
-			    
-		json_results = json.dumps(json.loads(json_results)[start:options.limit])
+            if options.limit:
+                start = 0
+                if options.marker:
+                    # I think my logic here was that if the marker
+                    # was an OpenStack image than we aren't even looking
+                    # at these images yet however this means that either
+                    # we have looked at all of them or none of them yet
+                    # in the latter case we will never be able to look
+                    # at them so I would rather choose the less wrong
+                    # option of always showing them.
+#                    if not options.marker.startswith(('emi','eki','eri')):
+#                        start = limit
+#                    else:
+                    for index, image in enumerate(json.loads(json_results)):
+                        if image['id'] == options.marker:
+                            start = index + 1
+                        
+                json_results = json.dumps(json.loads(json_results)[start:start + options.limit])
 
-	    print json_results
+            print json_results
 
         elif options.list == "instances":
-	    if options.id:
-		json_results = resource_by_id(options.id, conn.list_nodes())
-	    else:
-		json_results = CloudTools.jsonifyLList(conn.list_nodes())
-	    print json_results.replace('"status": "running"','"status": "active"')
+            if options.id:
+        	json_results = resource_by_id(options.id, conn.list_nodes())
+            else:
+        	json_results = CloudTools.jsonifyLList(conn.list_nodes())
+            print json_results.replace('"status": "running"','"status": "active"')
 
         elif options.list == "keys":
-	    aws_schema = "http://ec2.amazonaws.com/doc/2010-08-31/"
-	    xml_as_dict = xmldict.xml_to_dict(conn.list_keys().__dict__['body'].replace(aws_schema, ''))
-	    if xml_as_dict["DescribeKeyPairsResponse"]["keySet"] is None:
-		print []
-	    else:
-		result =  xml_as_dict["DescribeKeyPairsResponse"]["keySet"]["item"]
+            aws_schema = "http://ec2.amazonaws.com/doc/2010-08-31/"
+            xml_as_dict = xmldict.xml_to_dict(conn.list_keys().__dict__['body'].replace(aws_schema, ''))
+            if xml_as_dict["DescribeKeyPairsResponse"]["keySet"] is None:
+        	print []
+            else:
+        	result =  xml_as_dict["DescribeKeyPairsResponse"]["keySet"]["item"]
 
 
-		if 'keyName' in result:
-		    result['keyMaterial'] = ""
-		    result = [result]
-		else:
-		    for item in result:
-		        if 'keyName' in result:
-				item['keyMaterial'] = ""
+        	if 'keyName' in result:
+        	    result['keyMaterial'] = ""
+        	    result = [result]
+        	else:
+        	    for item in result:
+        	        if 'keyName' in result:
+        			item['keyMaterial'] = ""
 
-		if options.id:
-		    result = keypair_by_name(options.id, result)
+        	if options.id:
+        	    result = keypair_by_name(options.id, result)
                 keys_json = json.dumps(result)
-	        print(keys_json)
+                print(keys_json)
 
         # ACTIONS
         elif options.action == "launch":
-	    try:
-		img = CloudTools.findBy("id", conn.list_images(), options.id)
-	        sze = CloudTools.findBy("id", conn.list_sizes(), options.size)
-		if hasattr(options, 'keyname') and options.keyname is not None:
-		    if hasattr(options, 'userdata') and options.userdata is not None:
-			conn.create_node(name='', image=img, size=sze,
+            try:
+        	img = CloudTools.findBy("id", conn.list_images(), options.id)
+                sze = CloudTools.findBy("id", conn.list_sizes(), options.size)
+        	if hasattr(options, 'keyname') and options.keyname is not None:
+        	    if hasattr(options, 'userdata') and options.userdata is not None:
+        		conn.create_node(name='', image=img, size=sze,
                             ex_keyname=options.keyname,
                             ex_mincount=options.number,
-			    ex_userdata=base64.b64decode(options.userdata))
-		    else:			
-			conn.create_node(name='', image=img, size=sze, 
-			    ex_keyname=options.keyname, 
-			    ex_mincount=options.number)
+        		    ex_userdata=base64.b64decode(options.userdata))
+        	    else:			
+        		conn.create_node(name='', image=img, size=sze, 
+        		    ex_keyname=options.keyname, 
+        		    ex_mincount=options.number)
 
-		print(CloudTools.SUCCESS)
+        	print(CloudTools.SUCCESS)
             except InvalidCredsError:
                 raise InvalidCredsError()
             except:
-		print '[{"message": "Quota exceeded: code=InstanceLimitExceeded", "code": 413, "retryAfter": 0}]'
+        	print '[{"message": "Quota exceeded: code=InstanceLimitExceeded", "code": 413, "retryAfter": 0}]'
 
         elif options.action == "kill":
             ins = CloudTools.findBy("id", conn.list_nodes(), options.id)
@@ -151,18 +158,18 @@ def api_request(options, conn):
             print(CloudTools.SUCCESS)
 
         elif options.action == "create_keypair":
-	    try:
-		resp = conn.ex_create_keypair(name=options.keyname)
+            try:
+        	resp = conn.ex_create_keypair(name=options.keyname)
     		for keys in resp:
-		    resp[keys] = resp[keys].replace('\n','\\n')
-		resp['keyName'] = options.keyname
-		print json.dumps([resp])
-	    except InvalidCredsError:
-		raise InvalidCredsError()
-	    except:
-		print '[{"message": "Key pair \'' + options.keyname + '\' already exists.", "code": 409}]'
+        	    resp[keys] = resp[keys].replace('\n','\\n')
+        	resp['keyName'] = options.keyname
+        	print json.dumps([resp])
+            except InvalidCredsError:
+        	raise InvalidCredsError()
+            except:
+        	print '[{"message": "Key pair \'' + options.keyname + '\' already exists.", "code": 409}]'
 
-	elif options.action == "import_keypair":
+        elif options.action == "import_keypair":
             resp = conn.ex_import_keypair(name=options.keyname, keyfile=options.keyfile)
             for keys in resp:
                 resp[keys] = resp[keys].replace('\n','\\n')

@@ -58,7 +58,6 @@ class Transformer(object):
         
         transformed = self.transform_templates(json_string, path)
 
-	#print "TRANSFORMED", transformed
         
         try:
             j_object[name] = self.loads(transformed)
@@ -160,15 +159,12 @@ class Transformer(object):
         '''
         
         j_list = self.loads(json_string)
-	#print "JLIST IN", json_string
-	#print "J_LIST OBJ", j_list
         new_list = []
         
         for j_obj in j_list:
 	    
             j_string = json.dumps(j_obj)
             new_json = self.transform(j_string, name, path)
-	    #print "NEW_JSON", new_json
             new_list.append(self.loads(new_json))
             
         return json.dumps(new_list)
