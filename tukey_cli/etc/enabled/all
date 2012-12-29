@@ -5,6 +5,7 @@ basedir=/home/ubuntu
 venv=/home/ubuntu/tukey-middleware-1/tools/with_venv.sh
 middledir=%(basedir)s/tukey-middleware-1
 
+#clouds='["loginsullivan","sullivan"]'
 clouds='["sullivan","loginsullivan"]'
 
 script_file=%(middledir)s/auth_proxy/multiple_keys.py

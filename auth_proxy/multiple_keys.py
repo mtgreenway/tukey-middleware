@@ -106,6 +106,8 @@ def main():
 
         logger.debug(keypair_string)
         created_keypair = json.loads(keypair_string)
+        if 'keypair' in created_keypair['keypair']:
+            created_keypair = created_keypair['keypair']
         public_key = created_keypair['keypair']['public_key']
 
     result = None
@@ -115,10 +117,14 @@ def main():
             public_key=public_key)
 
     if keypair_string is None:
-        keypair = json.loads(result)
-        keypair['keypair'] = keypair['keypair']['keypair']
-        keypair_string = json.dumps(keypair)
-        logger.debug("the keypair string is : %s", keypair_string)
+        keypair_string = result
+
+    keypair = json.loads(keypair_string)
+    if 'keypair' in keypair['keypair']:
+        keypair = keypair['keypair']
+    keypair_string = json.dumps(keypair)
+
+    logger.debug("the keypair string is : %s", keypair_string)
 
     print keypair_string
 
