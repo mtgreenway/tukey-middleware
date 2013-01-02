@@ -2,6 +2,7 @@ import json
 import logging
 import logging.handlers
 import os
+import psycopg2
 import sys
 import time
 
@@ -20,9 +21,7 @@ logFile.setFormatter(formatter)
 
 logger.addHandler(logFile)
 
-logger.debug("TEST")
 
-import psycopg2
 
 def time_to_unix(time_str):
     format_str = '%Y-%m-%dT%H:%M:%S.%f'
@@ -30,7 +29,52 @@ def time_to_unix(time_str):
     return int(time.mktime(time.strptime(time_str, format_str)))
 
 
-def query_usage(query):
+def time_to_unix(time_str):
+    if '.' in time_str:
+        format_str = '%Y-%m-%dT%H:%M:%S.%f'
+    else:
+        format_str = '%Y-%m-%dT%H:%M:%S'
+
+    return int(time.mktime(time.strptime(time_str, format_str)))
+
+
+def get_usage_attribute(start, stop, resource, username, attr, name, hours=False):
+
+    usage_hours = "select sum(val) / 60 as %(name)s "
+
+    usage_mean = "select sum(val) / count(val) as %(name)s "
+
+    usage_template = """
+        from log
+        where ts < %(stop)s and ts > %(start)s 
+        and res='%(resource)s' 
+        and fea='%(username)s-%(attr)s';
+    """
+
+    if hours:
+        usage_template = usage_hours + usage_template 
+    else:
+        usage_template = usage_mean + usage_template
+
+    usage_query = usage_template % locals()
+
+    logger.debug(usage_query)
+
+    return usage_query
+
+
+def get_usages(resources, attributes):
+
+    usages = []
+
+    for name, resource in resources.items():
+        for attr in attributes:
+            usages.append((resource, attr, name))
+
+    return usages
+
+
+def main():
 
     conn_template = "dbname='%s' user='%s' host='%s' password='%s'"
     db_name = local_settings.USAGE_DB_NAME
@@ -46,54 +90,6 @@ def query_usage(query):
     conn = psycopg2.connect(conn_str)
 
     cur = conn.cursor()
-
-    cur.execute(query)
-
-    results = cur.fetchone()
-
-    cur.close()
-
-    return results
-
-
-def time_to_unix(time_str):
-    if '.' in time_str:
-        format_str = '%Y-%m-%dT%H:%M:%S.%f'
-    else:
-        format_str = '%Y-%m-%dT%H:%M:%S'
-
-    return int(time.mktime(time.strptime(time_str, format_str)))
-
-
-def get_usage_attribute(start, stop, resource, username, attr, name):
-
-    usage_template = """
-        select sum(val) / count(val) as %(name)s
-        from log
-        where ts < %(stop)s and ts > %(start)s 
-        and res='%(resource)s' 
-        and fea='%(username)s-%(attr)s';
-    """    
-
-    usage_query = usage_template % locals()
-
-    logger.debug(usage_query)
-
-    return query_usage(usage_query)[0]
-
-
-def get_usages(resources, attributes):
-
-    usages = []
-
-    for name, resource in resources.items():
-        for attr in attributes:
-            usages.append((resource, attr, name))
-
-    return usages
-
-
-def main():
 
     tenant_id = sys.argv[4]
 
@@ -121,10 +117,13 @@ def main():
 
     for resource, attr, name in usages:
 	result_key = name + '_' + attr
-        results[result_key] = get_usage_attribute(_start_unix, _stop_unix, resource,
-	    tenant_id, attr, result_key)
+        query = get_usage_attribute(_start_unix,
+            _stop_unix, resource, tenant_id, attr, result_key,
+            attr in local_settings.USAGE_HOURS)
+        cur.execute(query)
+        results[result_key] =  cur.fetchone()[0]
 
-    results =  {key: result if key.endswith("du") or result is None else float(result) * total_hours for key, result in results.items()}
+    results =  {key: result if key.endswith("du") or result is None else float(result) for key, result in results.items()}
 
     results = {key: float(result) for key, result in results.items() if result is not None}
 
@@ -152,6 +151,9 @@ def main():
     logger.debug(final_usages)
 
     print json.dumps([final_usages])
+
+    cur.close()
+    conn.close()
 
 
 if __name__ == "__main__":
