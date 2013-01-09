@@ -83,6 +83,7 @@ def userInfo(method, id, cloud_name):
         logger.debug("creds is none")
         creds = '', ''
 
+    logger.debug(query)
     logger.debug(creds)
 
     return creds
@@ -170,10 +171,11 @@ def delete_sshkey(cloud, username, keyname):
 
 
 def get_keypairs(cloud, username):
+    logger = logging.getLogger('tukey-auth')
 
     query = """
         select name, fingerprint, pubkey from keypair, login, cloud 
-        where cloud_name='%(cloud)s' and cloud.cloud_id = login.cloud_id
+        where cloud_name='%(cloud)s' and cloud.cloud_id = keypair.cloud_id
         and login.username='%(username)s' and login.userid=keypair.userid;
     """ % locals()
 
@@ -196,6 +198,9 @@ def get_keypairs(cloud, username):
         conn.close()
 
     attributes = ['name', 'fingerprint', 'public_key']
+
+    logger.debug(query)
+    logger.debug(results)
 
     return [ {"keypair": {attributes[i]: row[i]
         for i in range(0,len(row)) }}  for row in results]

@@ -1,14 +1,23 @@
+# adler login server ssh stuff
+
 [commands]
-basedir=/home/ubuntu
+
+homedir=/home/ubuntu
+basedir=%(homedir)s/tukey-middleware
+
 fingerprint='FC9B3EC071DE820529E974BDF28152B028BC3A6D'
-gpg_home=%(basedir)s/.gnupg
+gpg_home=%(homedir)s/.gnupg
 passphrase='tukey'
 # G12 host with ssh keys
 host=10.103.112.1:5005
-keyfile=%(basedir)s/tukey/tukey-middleware/tukey_cli/etc/keys/adler.pub
 
-script_file=%(basedir)s/tukey/tukey-middleware/auth_proxy/ssh_gen.py
-script=python %(script_file)s %(fingerprint)s %(gpg_home)s %(passphrase)s %(host)s %(keyfile)s
+command_base=%(basedir)s/tukey_cli/
+venv=%(basedir)s/tools/with_venv.sh
+
+keyfile=%(command_base)s/etc/keys/adler.pub
+
+script_file=%(basedir)s/auth_proxy/ssh_gen.py
+script=%(venv)s python %(script_file)s %(fingerprint)s %(gpg_home)s %(passphrase)s %(host)s %(keyfile)s
 
 resource=adler
 username=${adler/username}

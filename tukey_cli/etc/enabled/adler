@@ -3,12 +3,18 @@ driver: EucalyptusAuth
 
 [commands]
 # Variables used for the commands
-command_base=/home/ubuntu/tukey-middleware-1/tukey_cli/
-venv=/home/ubuntu/tukey-middleware-1/tools/with_venv.sh
+
+# Change me!
+basedir=/home/ubuntu/tukey-middleware
+
+command_base=%(basedir)s/tukey_cli/
+venv=%(basedir)s/tools/with_venv.sh
 compute=%(venv)s python %(command_base)stools/eucalyptus/compute.py
 
-basedir=/var/lib/cloudgui/users/
-cred_file=%(basedir)s${username}/.euca/eucarc
+# This should contain the Eucarc files for the 
+# Users.
+creddir=/var/lib/cloudgui/users/
+cred_file=%(creddir)s${username}/.euca/eucarc
 creds=--credentials %(cred_file)s
 
 
