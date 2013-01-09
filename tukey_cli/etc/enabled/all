@@ -2,14 +2,25 @@
 
 [commands]
 basedir=/home/ubuntu
-venv=/home/ubuntu/tukey-middleware-1/tools/with_venv.sh
-middledir=%(basedir)s/tukey-middleware-1
+venv=/home/ubuntu/tukey-middleware/tools/with_venv.sh
+middledir=%(basedir)s/tukey-middleware
 
-#clouds='["loginsullivan","sullivan"]'
-clouds='["sullivan","loginsullivan"]'
+echo_command=echo -n
+clouds='["adler","loginsullivan","loginadler","sullivan"]'
+#clouds='["sullivan","loginsullivan"]'
 
 script_file=%(middledir)s/auth_proxy/multiple_keys.py
-script=%(venv)s python %(script_file)s ${auth-project-id} ${auth-token} '${name}' %(clouds)s
+script=%(venv)s python %(script_file)s ${auth-project-id} ${auth-token} '${name}' $( \
+    if [ '${adler/username}' = '$'{adler/username} ]; then
+        %(echo_command)s '['
+    else
+        %(echo_command)s '["adler","loginsullivan"'
+    fi; \
+    if [ '${sullivan/access/user/username}' = '$'{sullivan/access/user/username} ]; then
+        %(echo_command)s ']'
+    else
+        %(echo_command)s ',"loginadler","sullivan"]'
+    fi )
 
 os-keypairs: if [ '${method}' = 'POST' ]; then
                 if [ '${public_key}'  = '$'{public_key} ]; then
@@ -22,16 +33,11 @@ os-keypairs: if [ '${method}' = 'POST' ]; then
         fi
 
 [tag]
-cloud: Sullivan Login Node
+cloud: All Resources
 
-cloud_name: Sullivan Login Node
+cloud_name: All Resources
 
-cloud_id: loginsullivan
+cloud_id: all
 
 [enabled]
-command: if [ '${sullivan/access/user/username}' = '$'{sullivan/access/user/username} ]; then
-        false
-    else
-        true
-    fi
-
+command: true

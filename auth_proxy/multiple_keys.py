@@ -18,6 +18,7 @@ import requests
 import sys
 
 from logging_settings import get_logger
+from subprocess import Popen, PIPE
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../local')
 import local_settings
@@ -75,8 +76,6 @@ def create_keypair(project_id, auth_token, name, cloud, public_key=None):
         print '{"message": "Not all keypairs could be created.", "code": 409}'
         sys.exit(1)
 
-    logger.debug(dir(response))
-
     logger.debug(response.text)
 
     return response.text
@@ -109,6 +108,16 @@ def main():
         if 'keypair' in created_keypair['keypair']:
             created_keypair = created_keypair['keypair']
         public_key = created_keypair['keypair']['public_key']
+
+        # Eucalyptus will not give us a pubkey
+        if public_key == "":
+            private_key = created_keypair['keypair']['private_key'].replace('\n','\\\\n')
+            command = "/bin/echo -e %s |" + local_settings.SSH_KEYGEN_COMMAND + " -y -f /dev/stdin"
+            logger.debug(command % private_key)
+            process = Popen(command % private_key, stdout=PIPE, shell=True)
+            output = process.communicate()[0]
+            logger.debug(output)
+            public_key = output
 
     result = None
 
