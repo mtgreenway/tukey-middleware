@@ -14,12 +14,12 @@ script=%(venv)s python %(script_file)s ${auth-project-id} ${auth-token} '${name}
     if [ '${adler/username}' = '$'{adler/username} ]; then
         %(echo_command)s '['
     else
-        %(echo_command)s '["adler","loginsullivan"'
+        %(echo_command)s '["adler","loginadler"'
     fi; \
     if [ '${sullivan/access/user/username}' = '$'{sullivan/access/user/username} ]; then
         %(echo_command)s ']'
     else
-        %(echo_command)s ',"loginadler","sullivan"]'
+        %(echo_command)s ',"sullivan","loginsullivan"]'
     fi )
 
 os-keypairs: if [ '${method}' = 'POST' ]; then
