@@ -8,21 +8,38 @@
 #
 # Matthew Greenway <mgreenway@uchicago.edu>
 
-
-import glob
-from libcloud.compute.types import Provider
-from libcloud.compute.providers import get_driver
-from cloudTools import CloudTools
-from xml.etree.ElementTree import tostring, XML
-import string
-import os
-import time
-import json
-import xmldict
-import sys
 import base64
+import glob
+import json
+import logging
+import logging.handlers
+import os
+import string
+import sys
+import time
+import xmldict
 
+from cloudTools import CloudTools
+from libcloud.compute.providers import get_driver
+from libcloud.compute.types import Provider
+from xml.etree.ElementTree import tostring, XML
 from libcloud.common.types import InvalidCredsError
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../../local')
+import local_settings
+
+logger = logging.getLogger('tukey-euca')
+logger.setLevel(local_settings.LOG_LEVEL)
+
+formatter = logging.Formatter(local_settings.LOG_FORMAT)
+
+log_file_name = local_settings.LOG_DIR + 'tukey-euca.log'
+
+logFile = logging.handlers.WatchedFileHandler(log_file_name)
+logFile.setFormatter(formatter)
+
+logger.addHandler(logFile)
+
 
 def main():
     (options, args) = CloudTools.parser.parse_args()
@@ -83,6 +100,9 @@ def api_request(options, conn):
             if options.limit:
                 start = 0
                 if options.marker:
+                    logger.debug("marker is set")
+                    logger.debug(options.marker)
+
                     # I think my logic here was that if the marker
                     # was an OpenStack image than we aren't even looking
                     # at these images yet however this means that either
@@ -96,8 +116,12 @@ def api_request(options, conn):
                     for index, image in enumerate(json.loads(json_results)):
                         if image['id'] == options.marker:
                             start = index + 1
-                        
+                     
+                logger.debug("the limit: %s", options.limit)
+                logger.debug(len(json.loads(json_results)))
+                logger.debug(start + options.limit)
                 json_results = json.dumps(json.loads(json_results)[start:start + options.limit])
+		
 
             print json_results
 
