@@ -107,3 +107,14 @@ There is a create_tukey_user.py script to create and delete users::
 
 Currently method needs to be openid or shibboleth.  For Eucalyptus users
 the password will do nothing.
+
+INSTALLING BEHIND APACHE
+========================
+
+Install Apache and mod_wsgi::
+    $sudo apt-get install apache2 libapache2-mod-wsgi
+
+Link to the configuration files::
+    $sudo ln -s $(pwd)/bin/nova-apache.conf /etc/apache2/sites-enabled/nova-apache.conf
+    $sudo ln -s $(pwd)/bin/glance-apache.conf /etc/apache2/sites-enabled/glance-apache.conf
+    $sudo ln -s $(pwd)/bin/auth-apache.conf /etc/apache2/sites-enabled/auth-apache.conf
