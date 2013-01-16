@@ -49,6 +49,15 @@ from somewhere like:
 /usr/lib/python2.7/dist-packages/M2Crypto/__m2crypto.so to the the venv
 installation.
 
+
+Newer versions of the Keystone Client automatically send requests to
+port 35357
+To work with new versions of python-keystoneclient run the iptables.py 
+script with root permissions::
+
+  $ sudo python auth_proxy/iptables.py
+
+
 There are three main proxies you will need to start: the authentication
 service the nova proxy and the glance proxy
 Run the start up scripts for each service::
