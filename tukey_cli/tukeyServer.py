@@ -89,19 +89,23 @@ class OpenStackApiProxy(object):
                 if not name in post_exception_names:
                     name = name[:-1]
                 
-                body_values = json.loads(req.body)[name]
-                split_id = body_values['name'].split('-',1)
-                cloud = split_id[0]
-                new_object_name = split_id[-1]
-                body_values['name'] = new_object_name
-
-                #self.logger.debug(body_values)
-                
-                req.body = json.dumps({name: body_values})
-                
-                global_values[TukeyCli.GLOBAL_SECTION].update(body_values)
-                
-                cli.load_config_dir(conf_dir + cloud)
+                body_values = json.loads(req.body)
+                if name in body_values:
+                    body_values = json.loads(req.body)[name]
+                    split_id = body_values['name'].split('-',1)
+                    cloud = split_id[0]
+                    new_object_name = split_id[-1]
+                    body_values['name'] = new_object_name
+    
+                    #self.logger.debug(body_values)
+                    
+                    req.body = json.dumps({name: body_values})
+                    
+                    global_values[TukeyCli.GLOBAL_SECTION].update(body_values)
+                    
+                    cli.load_config_dir(conf_dir + cloud)
+                else:
+                    cli.load_config_dir(conf_dir)
 
             elif req.method == "DELETE" and name in multiplexed_names:
                 id = global_values[TukeyCli.GLOBAL_SECTION]['id']

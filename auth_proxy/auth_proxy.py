@@ -57,8 +57,6 @@ class AuthProxy(object):
     other middle ware between Horizon and cloud services.
     '''
 
-    TOKEN_EXPIRATION = 24*60*60
-
     def __init__(self, keystone_host, keystone_port, memcache_host, 
         memcache_port, conf_dir, logger):
         '''
@@ -91,12 +89,12 @@ class AuthProxy(object):
 
                     driver_object = OpenStackAuth(local_settings.API_HOST,
                         local_settings.MEMBER_ROLE_ID, 
-                        AuthProxy.TOKEN_EXPIRATION, host, port)
+                        local_settings.AUTH_TOKEN_EXPIRATION, host, port)
 
                 if driver == 'EucalyptusAuth':
                     driver_object = EucalyptusAuth(local_settings.API_HOST,
                         local_settings.MEMBER_ROLE_ID,
-                        AuthProxy.TOKEN_EXPIRATION)
+                        local_settings.AUTH_TOKEN_EXPIRATION)
 
                 self.auth_systems[conf.split(sep)[-1]] = driver_object
 
@@ -248,7 +246,7 @@ class AuthProxy(object):
 
         self.logger.info("login for %s SUCCESS", identifier)
 
-        self.mc.set(str(token), user_info, AuthProxy.TOKEN_EXPIRATION)
+        self.mc.set(str(token), user_info, local_settings.AUTH_TOKEN_EXPIRATION)
 
         return id_info, token
         
@@ -287,11 +285,20 @@ class AuthProxy(object):
         if 'access' in res_object and 'token' in res_object['access']:
             old = self.mc.get(headers['x-auth-token'])
             self.mc.set(str(res_object['access']['token']['id']), old,
-                AuthProxy.TOKEN_EXPIRATION)
+                local_settings.AUTH_TOKEN_EXPIRATION)
         
-        res = res.replace(self.keystone_host, '127.0.0.1')
+          
+        for old in local_settings.PROXY_REPLACE.keys():
+            self.logger.debug("REPLACEING %s with %s", old,  local_settings.PROXY_REPLACE[old])
+            res = res.replace(old, local_settings.PROXY_REPLACE[old])
+
+        for port in local_settings.PROXY_ENDPOINT_PORTS:
+            # maybe just do a regex and replace any host not just 
+            # the keystone host
+            res = res.replace("%s:%d" % (self.keystone_host, port), "127.0.0.1:%d" %  port)
+
         self.logger.debug( "Forwarded request")
-        self.logger.debug( res)
+        self.logger.debug(res)
         resp = Response(res)
         resp.conditional_response = True
         return resp
