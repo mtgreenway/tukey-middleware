@@ -1,12 +1,14 @@
 #!/usr/bin/python
 import logging
-import psycopg2
-import sys
 import optparse
+import psycopg2
 
 from local import local_settings
 
+
 logger = logging.getLogger(__name__)
+logger.addHandler(logging.StreamHandler())
+logger.setLevel(logging.DEBUG)
 
 verbose = False
 
@@ -32,7 +34,6 @@ def connect():
     finally:
         return connection
 
-
 def connect_and_query(cur, query):
     # only for queries no commit/rollback
     try:
@@ -41,9 +42,8 @@ def connect_and_query(cur, query):
 
     except StandarError:
         logger.error(e.pgerror)
-    
-    return results
 
+    return results
 
 def exists_query(cur, query):
 
@@ -55,24 +55,22 @@ def exists_query(cur, query):
 def account_exists(cur, cloud, username):
 
     exists = """
-    SELECT COUNT(id) FROM login, cloud 
+    SELECT COUNT(id) FROM login, cloud
     where cloud_name='%(cloud)s' and username='%(username)s'
     and login.cloud_id = cloud.cloud_id;
     """ % locals()
 
     return exists_query(cur, exists)
 
-
 def update_account(cloud, username, password):
     condition = """
-    WHERE username='%(username)s' and 
+    WHERE username='%(username)s' and
     cloud_id=(SELECT cloud_id FROM cloud WHERE cloud_name='%(cloud)s');
     """
-    
-    return [ 
+
+    return [
         ("UPDATE login SET password='%(password)s' " + condition) % locals()
     ]
-
 
 def account_enabled(cur, cloud, username):
 
@@ -85,23 +83,19 @@ def account_enabled(cur, cloud, username):
 
     return exists_query(cur, exists)
 
-
-
 def login_enabled(cur, method, identifier):
 
-    exists = """SELECT COUNT(login_identifier_id) FROM 
-    login_identifier_enabled 
+    exists = """SELECT COUNT(login_identifier_id) FROM
+    login_identifier_enabled
     JOIN login_identifier ON login_identifier.id = login_identifier_enabled.login_identifier_id
-    JOIN login_method ON login_method.method_id = login_identifier.method_id 
+    JOIN login_method ON login_method.method_id = login_identifier.method_id
     WHERE method_name='%(method)s' and identifier='%(identifier)s';""" % locals()
 
     return exists_query(cur, exists)
 
-
-
 def enable_account(cloud, username):
     condition = """
-    WHERE username='%(username)s' and 
+    WHERE username='%(username)s' and
     cloud_id=(SELECT cloud_id FROM cloud WHERE cloud_name='%(cloud)s');
     """
 
@@ -110,60 +104,53 @@ def enable_account(cloud, username):
     ]
 
 def create_account(cloud, username, password):
-    
+
     return [
     "INSERT INTO userid DEFAULT VALUES;",
-    """INSERT INTO login (userid, cloud_id, username, password) 
+    """INSERT INTO login (userid, cloud_id, username, password)
     VALUES (currval('userid_userid_sequence'),
     (SELECT cloud_id FROM cloud WHERE cloud_name='%(cloud)s'),
     '%(username)s', '%(password)s');""" % locals()
     ]
-
-
 def login_exists(cur, method, identifier):
-    
-    exists = """SELECT COUNT(id) FROM login_identifier 
-    JOIN login_method ON login_method.method_id = login_identifier.method_id 
+
+    exists = """SELECT COUNT(id) FROM login_identifier
+    JOIN login_method ON login_method.method_id = login_identifier.method_id
     WHERE method_name='%(method)s' and identifier='%(identifier)s';""" % locals()
 
     return exists_query(cur, exists)
 
-
 def enable_login(method, identifier):
     return [
-    """INSERT INTO login_identifier_enabled (login_identifier_id) 
-    SELECT id FROM login_identifier JOIN login_method 
-    ON login_method.method_id = login_identifier.method_id 
+    """INSERT INTO login_identifier_enabled (login_identifier_id)
+    SELECT id FROM login_identifier JOIN login_method
+    ON login_method.method_id = login_identifier.method_id
     WHERE method_name='%(method)s' and identifier='%(identifier)s';""" % locals()
     ]
 
-
 def create_login(method, identifier, cloud, username):
     return [
-    """INSERT INTO login_identifier (userid, method_id, identifier) 
+    """INSERT INTO login_identifier (userid, method_id, identifier)
     VALUES ((SELECT userid FROM login JOIN cloud ON login.cloud_id = cloud.cloud_id
         WHERE cloud_name='%(cloud)s' and username='%(username)s'),
     (SELECT method_id FROM login_method where method_name='%(method)s'),
      '%(identifier)s');""" % locals(),
-    """INSERT INTO login_identifier_enabled (login_identifier_id) 
+    """INSERT INTO login_identifier_enabled (login_identifier_id)
     VALUES (currval('login_identifier_id_sequence'));""" % locals()
     ]
-
 
 def add_account(cloud, username, password, method, identifier):
 
     return [
-    """INSERT INTO login (userid, cloud_id, username, password) 
-    VALUES (SELECT userid from login_identifier
+    """INSERT INTO login (userid, cloud_id, username, password)
+    VALUES ((SELECT userid from login_identifier
     JOIN login_method on login_method.method_id = login_identifier.method_id
     WHERE method_name='%(method)s' and identifier='%(identifier)s'),
     (SELECT cloud_id FROM cloud WHERE cloud_name='%(cloud)s'),
     '%(username)s', '%(password)s');""" % locals()
     ]
 
-
 # deletion statements
-
 def disable_login(username, cloud):
 
     return ["""DELETE FROM login_enabled
@@ -172,7 +159,6 @@ def disable_login(username, cloud):
         and login.username='%(username)s' and cloud.cloud_name='%(cloud)s';"""
         % locals()]
 
-
 def delete_login(username, cloud):
 
     return ["""DELETE FROM login
@@ -180,27 +166,24 @@ def delete_login(username, cloud):
         and login.username='%(username)s' and cloud.cloud_name='%(cloud)s';"""
         % locals()]
 
-
 def disable_identifiers(username, cloud):
 
     return ["""DELETE FROM login_identifier_enabled
         USING login_identifier, login, cloud WHERE
-        login_identifier.userid = login.userid 
+        login_identifier.userid = login.userid
         and login.username = '%(username)s' and login.cloud_id = cloud.cloud_id
         and cloud.cloud_name = '%(cloud)s'
         and login_identifier.id = login_identifier_enabled.login_identifier_id;"""
         % locals()]
 
-
 def delete_identifiers(username, cloud):
 
     return ["""DELETE FROM login_identifier
         USING login, cloud WHERE
-        login_identifier.userid = login.userid 
+        login_identifier.userid = login.userid
         and login.username = '%(username)s' and login.cloud_id = cloud.cloud_id
         and cloud.cloud_name = '%(cloud)s';"""
         % locals()]
-
 
 def disable_identifier(identifier):
 
@@ -210,15 +193,16 @@ def disable_identifier(identifier):
         and login_identifier.id = login_identifier_enabled.login_identifier_id;"""
         % locals()]
 
-
 def delete_identifier(identifier):
 
     return ["""DELETE FROM login_identifier
         WHERE login_identifier.identifier='%(identifier)s'"""
         % locals()]
 
-
 def run_statements(statements):
+
+    logger.debug(statements)
+
     conn = connect()
     cur = conn.cursor()
 
@@ -232,14 +216,15 @@ def run_statements(statements):
 
     except psycopg2.Warning, e:
         logger.warning(e.pgerror)
+        conn.rollback()
 
     except psycopg2.Error, e:
         logger.error(e.pgerror)
+        conn.rollback()
 
     finally:
-      cur.close()
-      conn.close()
-
+        cur.close()
+        conn.close()
 
 def process_account(cloud, method, identifier, username, password):
 
@@ -256,7 +241,8 @@ def process_account(cloud, method, identifier, username, password):
                 statements += enable_account(cloud, username)
         else:
             if login_exists(cur, method, identifier):
-                add_account(cloud, username, password, method, identifier)
+                statements += add_account(cloud, username, password, method,
+                    identifier)
             else:
                 statements += create_account(cloud, username, password)
             statements += enable_account(cloud, username)
@@ -266,7 +252,6 @@ def process_account(cloud, method, identifier, username, password):
                 statements += enable_login(method, identifier)
         else:
             statements += create_login(method, identifier, cloud, username)
-            enable_login(method, identifier)
 
     except psycopg2.Warning, e:
         logger.warning(e.pgerror)
@@ -280,28 +265,23 @@ def process_account(cloud, method, identifier, username, password):
 
     run_statements(statements)
 
-
 def delete_account(cloud, username):
 
     run_statements(
-	disable_identifiers(username, cloud) +
-	delete_identifiers(username, cloud) +
-	disable_login(username, cloud) +
-	delete_login(username, cloud))
-
+        disable_identifiers(username, cloud) +
+        delete_identifiers(username, cloud) +
+        disable_login(username, cloud) +
+        delete_login(username, cloud))
 
 def disable_all():
 
     run_statements(["DELETE FROM login_enabled;",
         "DELETE FROM login_identifier_enabled;"])
 
-
-
-
 if __name__ == "__main__":
 
     usage = """To create a user: %prog [-v] [cloud method identifer username password]
-To disable all accounts: %prog [-v] -d 
+To disable all accounts: %prog [-v] -d
 To delete a user: %prog [-v] -r [cloud username]"""
 
     parser = optparse.OptionParser(usage)
@@ -320,7 +300,7 @@ To delete a user: %prog [-v] -r [cloud username]"""
     verbose = options.verbose
 
     if options.disable_all:
-	if len(args) != 0:
+        if len(args) != 0:
             parser.error("incorrect number of arguments")
             exit(1)
         disable_all()
@@ -330,7 +310,7 @@ To delete a user: %prog [-v] -r [cloud username]"""
             parser.error("incorrect number of arguments")
             exit(1)
         delete_account(args[0], args[1] )
-    
+
 
     else:
         if len(args) != 5:
@@ -338,3 +318,4 @@ To delete a user: %prog [-v] -r [cloud username]"""
             exit(1)
 
         process_account(args[0], args[1], args[2], args[3], args[4])
+
