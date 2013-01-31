@@ -13,7 +13,7 @@ APACHE_SITES_AVAILABLE=/etc/apache2/sites-available
 
 for site_name in auth glance nova 
 do
-	ln -s $TUKEY_MIDDLEWARE/bin/${site_name}-apache.conf $APACHE_SITES_AVAILABLE/${site_name}
+	sudo ln -s $TUKEY_MIDDLEWARE/bin/${site_name}-apache.conf $APACHE_SITES_AVAILABLE/${site_name}
 done
 
 # This action will be performed by the tukey-portal install.sh
