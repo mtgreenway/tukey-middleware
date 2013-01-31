@@ -157,7 +157,7 @@ def create_log_dir():
         sys.stderr.wirte('please set USER in local_settings file')
     else: 
         print 'Creating log dir requires sudo'
-        cmd = ['tools/create_log_dir.sh', local_settings.LOG_DIR,
+        cmd = ['tools/create_log.sh', local_settings.LOG_DIR,
             local_settings.USER]
         run_command(cmd, cwd=ROOT)
 
