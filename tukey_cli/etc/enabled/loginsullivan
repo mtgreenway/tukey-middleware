@@ -4,7 +4,7 @@
 
 
 homedir=/home/ubuntu
-basedir=%(homedir)s/tukey-middleware
+basedir=%(homedir)s/tukey-middleware-1
 
 fingerprint='FC9B3EC071DE820529E974BDF28152B028BC3A6D'
 gpg_home=%(homedir)s/.gnupg

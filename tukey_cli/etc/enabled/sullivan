@@ -22,10 +22,12 @@ port:	5000
 #forward:    True
 
 [commands]
-# this should probably not be done but we can do a hack here
-# and aggregate all the usage info here in this one call
-# this may help us reach the deadline :(
-os-simple-tenant-usage: echo [{}]
+
+os-simple-tenant-usage: if [ '${detailed}' = '1' ]; then
+        echo "#proxy" 
+    else
+        echo [{}]
+    fi
 
 
 

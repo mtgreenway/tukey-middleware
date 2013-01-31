@@ -129,7 +129,8 @@ class OpenStackApiProxy(object):
             if len(req.query_string) > 0:
                 path = "%s?%s" % (path, req.query_string)
 
-            #self.logger.debug("The command is %s", command)
+            self.logger.debug("The command is %s", command)
+            self.logger.debug(global_values)
 
             result = cli.execute_commands(command, values, object_name=name,
                 single=is_single, 

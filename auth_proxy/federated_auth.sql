@@ -12,14 +12,14 @@ SET client_min_messages = warning;
 -- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
 --
 
-CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+--CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 
 
 --
 -- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
 --
 
-COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
+--COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 
 
 SET search_path = public, pg_catalog;
@@ -102,7 +102,7 @@ ALTER SEQUENCE keypair_id_seq OWNED BY keypair.id;
 -- Name: keypair_id_seq; Type: SEQUENCE SET; Schema: public; Owner: cloudgui
 --
 
-SELECT pg_catalog.setval('keypair_id_seq', 50, true);
+SELECT pg_catalog.setval('keypair_id_seq', 199, true);
 
 
 --
@@ -123,7 +123,7 @@ ALTER TABLE public.login_userid_sequence OWNER TO cloudgui;
 -- Name: login_userid_sequence; Type: SEQUENCE SET; Schema: public; Owner: cloudgui
 --
 
-SELECT pg_catalog.setval('login_userid_sequence', 23, true);
+SELECT pg_catalog.setval('login_userid_sequence', 27, true);
 
 
 --
@@ -170,7 +170,7 @@ ALTER TABLE public.login_identifier_id_sequence OWNER TO cloudgui;
 -- Name: login_identifier_id_sequence; Type: SEQUENCE SET; Schema: public; Owner: cloudgui
 --
 
-SELECT pg_catalog.setval('login_identifier_id_sequence', 26, true);
+SELECT pg_catalog.setval('login_identifier_id_sequence', 30, true);
 
 
 --
@@ -249,7 +249,7 @@ ALTER TABLE public.userid_userid_sequence OWNER TO cloudgui;
 -- Name: userid_userid_sequence; Type: SEQUENCE SET; Schema: public; Owner: cloudgui
 --
 
-SELECT pg_catalog.setval('userid_userid_sequence', 18, true);
+SELECT pg_catalog.setval('userid_userid_sequence', 23, true);
 
 
 --
@@ -268,36 +268,6 @@ ALTER TABLE public.userid OWNER TO cloudgui;
 --
 
 ALTER TABLE ONLY keypair ALTER COLUMN id SET DEFAULT nextval('keypair_id_seq'::regclass);
-
-
---
--- Data for Name: cloud; Type: TABLE DATA; Schema: public; Owner: cloudgui
---
-
-COPY cloud (cloud_id, cloud_name) FROM stdin;
-2	adler
-3	sullivan
-\.
-
-
---
--- Data for Name: login_method; Type: TABLE DATA; Schema: public; Owner: cloudgui
---
-
-COPY login_method (method_id, method_name) FROM stdin;
-2	openid
-3	shibboleth
-\.
-
-
---
--- Data for Name: userid; Type: TABLE DATA; Schema: public; Owner: cloudgui
---
-
-COPY userid (userid) FROM stdin;
-2
-3
-\.
 
 
 --
@@ -362,6 +332,14 @@ ALTER TABLE ONLY login_identifier
 
 ALTER TABLE ONLY login_method
     ADD CONSTRAINT login_method_id PRIMARY KEY (method_id);
+
+
+--
+-- Name: userid_cloud; Type: CONSTRAINT; Schema: public; Owner: cloudgui; Tablespace: 
+--
+
+ALTER TABLE ONLY login
+    ADD CONSTRAINT userid_cloud UNIQUE (userid, cloud_id);
 
 
 --
@@ -456,4 +434,24 @@ GRANT ALL ON SCHEMA public TO PUBLIC;
 --
 -- PostgreSQL database dump complete
 --
+
+--DATA DUMP SECTION
+--
+-- Data for Name: cloud; Type: TABLE DATA; Schema: public; Owner: cloudgui
+--
+
+COPY cloud (cloud_id, cloud_name) FROM stdin;
+2	adler
+3	sullivan
+\.
+
+--
+-- Data for Name: login_method; Type: TABLE DATA; Schema: public; Owner: cloudgui
+--
+
+COPY login_method (method_id, method_name) FROM stdin;
+2	openid
+3	shibboleth
+\.
+
 

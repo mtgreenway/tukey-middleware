@@ -1,7 +1,7 @@
 import local_settings
 import logging
 import logging.handlers
-import tukeyServer
+import tukey_server
 
 log_file_name = local_settings.LOG_DIR + 'tukey-api.log'
 
@@ -17,4 +17,4 @@ logFile.setFormatter(formatter)
 logger.addHandler(logFile)
 logger.setLevel(logging.DEBUG)
 
-application = tukeyServer.OpenStackApiProxy(9292, '127.0.0.1', 11211, logger)
+application = tukey_server.OpenStackApiProxy(9292, '127.0.0.1', 11211, logger)

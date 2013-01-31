@@ -47,11 +47,19 @@ class FakeId(object):
     Keystone API for token, tenant and endpoint
     '''
 
-    def __init__(self, api_url, member_role_id, token_lifetime):
+    def __init__(self, api_url, member_role_id, token_lifetime,
+        glance_port=9292, nova_port=8774, ec2_port=8773, 
+        identity_admin_port=35357, identity_port=5000):
 
         self.token_lifetime = token_lifetime
         self.url = api_url
         self.member_role_id = member_role_id
+
+        self.glance_port = glance_port
+        self.nova_port = nova_port
+        self.ec2_port = ec2_port
+        self.identity_admin_port = identity_admin_port
+        self.identity_port = identity_port
 
 
     
@@ -104,64 +112,56 @@ class FakeId(object):
             }
 
 
+    class Endpoint(object):
+        
+        def __init__(self, admin_url, public_url, endpoint_type, name):
+            self.admin_url = admin_url
+            self.public_url = public_url
+            self.endpoint_type = endpoint_type
+            self.name = name
 
-    def _format_service_catalog(self, url, tenant_id):
+
+    def _format_service_catalog(self, host, tenant_id):
         '''The Keystone API Service Catalog form.
         '''
+        proxy_info = locals()
+
+        endpoints = [
+            Endpoint(
+                "".join(["http://%(host)s:", "%d" % self.glance_port , "/v1"]),
+                "".join(["http://%(host)s:", "%d" % self.glance_port , "/v1"]),
+                "image",
+                "Image Service"),
+            Endpoint(
+                "".join(["http://%(host)s:", "%d" % self.nova_port, "/v1.1/%(tenant_id)s"]),
+                "".join(["http://%(host)s:", "%d" % self.nova_port, "/v1.1/%(tenant_id)s"]),
+                "compute",
+                "Compute Service"),
+            Endpoint(
+                "".join(["http://%(host)s:", "%d" % self.ec2_port, "/services/Admin"]),
+                "".join(["http://%(host)s:", "%d" % self.ec2_port, "/services/Cloud"]),
+                "ec2",
+                "EC2 Service"),
+            Endpoint(
+                "".join(["http://%(host)s:", "%d" % self.identity_admin_port, "/v2.0"]),
+                "".join(["http://%(host)s:", "%d" % self.identity_port, "/v2.0"]),
+                "identity", 
+                "Identity Service")]
+
         return [
             {
                 "endpoints": [
                     {
-                        "adminURL": "http://%s:9292/v1" % url,
+                        "adminURL": endpoint.admin_url % proxy_info,
                         "region": "RegionOne",
-                        "publicURL": "http://%s:9292/v1" % url,
-                        "internalURL": "http://%s:9292/v1" % url
+                        "publicURL": endpoint.public_url % proxy_info,
+                        "internalURL": endpoint.public_url % proxy_info,
                     }
                 ],
                 "endpoints_links": [],
-                "type": "image",
-                "name": "Image Service"
-            },
-            {
-                "endpoints": [
-                    {
-                        "adminURL": "http://%s:8774/v1.1/%s" % (url, tenant_id),
-                        "region": "RegionOne",
-                        "publicURL": "http://%s:8774/v1.1/%s" % (url, tenant_id),
-                        "internalURL": "http://%s:8774/v1.1/%s" % (url, tenant_id)
-                    }
-                ],
-                "endpoints_links": [],
-                "type": "compute",
-                "name": "Compute Service"
-            },
-            {
-                "endpoints": [
-                    {
-                        "adminURL": "http://%s:8773/services/Admin" % url,
-                        "region": "RegionOne",
-                        "publicURL": "http://%s:8773/services/Cloud" % url,
-                        "internalURL": "http://%s:8773/services/Cloud" % url
-                    }
-                ],
-                "endpoints_links": [],
-                "type": "ec2",
-                "name": "EC2 Service"
-            },
-            {
-                "endpoints": [
-                    {
-                        "adminURL": "http://%s:35357/v2.0" % url,
-                        "region": "RegionOne",
-                        "publicURL": "http://%s:5000/v2.0" % url,
-                        "internalURL": "http://%s:5000/v2.0" % url
-                    }
-                ],
-                "endpoints_links": [],
-                "type": "identity",
-                "name": "Identity Service"
-            }
-        ]
+                "type": endpoint.endpoint_type,
+                "name": endpoint.name
+            } for endpoint in endpoints ]
 
 
     def _format_endpoint(self, token_id, tenant_id, user_id, tenant_name,

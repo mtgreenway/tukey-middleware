@@ -28,7 +28,9 @@ from os import path, sep
 from webob import Request, Response
 from webob import exc
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../local')
+
+sys.path.append(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'local'))
 import local_settings
 
 
@@ -95,6 +97,18 @@ class AuthProxy(object):
                     driver_object = EucalyptusAuth(local_settings.API_HOST,
                         local_settings.MEMBER_ROLE_ID,
                         local_settings.AUTH_TOKEN_EXPIRATION)
+
+                if driver == 'TestAuth':
+                    # there are definitely smells here
+                    # set user to '' if you want it to always be false
+                    driver_object = TestAuth(local_settings.API_HOST,
+                        local_settings.MEMBER_ROLE_ID,
+                        local_settings.AUTH_TOKEN_EXPIRATION,
+                        local_settings.TEST_GLANCE_PORT,
+                        local_settings.TEST_NOVA_PORT,
+                        local_settings.TEST_EC2_PORT,
+                        local_settings.TEST_IDENTITY_ADMIN_PORT,
+                        config.get('auth', 'user'))
 
                 self.auth_systems[conf.split(sep)[-1]] = driver_object
 

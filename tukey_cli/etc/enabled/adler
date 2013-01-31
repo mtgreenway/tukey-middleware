@@ -5,7 +5,7 @@ driver: EucalyptusAuth
 # Variables used for the commands
 
 # Change me!
-basedir=/home/ubuntu/tukey-middleware
+basedir=/home/ubuntu/tukey-middleware-1
 
 command_base=%(basedir)s/tukey_cli/
 venv=%(basedir)s/tools/with_venv.sh
@@ -70,7 +70,11 @@ os-keypairs: if [ '${method}' = 'POST' ]; then
 
 os-quota-sets: %(venv)s python %(command_base)stools/eucalyptus/get_quota.py 10.103.112.3 9402 ${username}
 
-os-simple-tenant-usage: %(venv)s python %(command_base)stools/get_usage.py sullivan ${start} ${end} ${username} ${access/user/username}
+os-simple-tenant-usage: if [ '${detailed}' = '1' ]; then
+       echo [{}]
+    else
+        %(venv)s python %(command_base)stools/get_usage.py sullivan ${start} ${end} ${username} ${access/user/username}
+    fi
 
 [transformations:listSizes]
 id:	name

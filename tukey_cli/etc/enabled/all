@@ -2,8 +2,8 @@
 
 [commands]
 basedir=/home/ubuntu
-venv=/home/ubuntu/tukey-middleware/tools/with_venv.sh
-middledir=%(basedir)s/tukey-middleware
+venv=/home/ubuntu/tukey-middleware-1/tools/with_venv.sh
+middledir=%(basedir)s/tukey-middleware-1
 
 echo_command=echo -n
 clouds='["adler","loginsullivan","loginadler","sullivan"]'
