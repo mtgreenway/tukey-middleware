@@ -25,7 +25,7 @@ Dependencies
 For Ubuntu use apt to install::
 
     $ sudo apt-get install python-virtualenv postgresql-9.1 postgresql-server-dev-9.1 swig build-essential memcached
-    $ sudo apt-get build-dep python-psycopg2
+    $ sudo apt-get python-psycopg2
     
 
 Getting Started
