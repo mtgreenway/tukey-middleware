@@ -25,6 +25,8 @@ import os
 import subprocess
 import sys
 
+from optparse import OptionParser
+
 # get local settings across packages
 sys.path.append('local')
 import local_settings
@@ -101,7 +103,7 @@ def create_virtualenv(venv=VENV):
     virtual environment
     """
     print 'Creating venv...',
-    run_command(['virtualenv', '-q', '--no-site-packages', VENV])
+    run_command(['virtualenv', '-q', '--no-site-packages', venv])
     print 'done.'
     print 'Installing pip in virtualenv...',
     if not run_command([WITH_VENV, 'easy_install', 'pip']).strip():
@@ -155,8 +157,14 @@ def create_log_dir():
         sys.stderr.wirte('please set USER in local_settings file')
     else: 
         print 'Creating log dir requires sudo'
-        cmd = ['tools/create_log_dir.sh', local_settings.LOG_DIR, local_settings.USER]
+        cmd = ['tools/create_log_dir.sh', local_settings.LOG_DIR,
+            local_settings.USER]
         run_command(cmd, cwd=ROOT)
+
+def create_apache_config():
+    print 'Creating and linking apache confs requires sudo'
+    cmd = ['tools/create_apache.sh']
+    run_command(cmd, cwd=ROOT)
 
 
 def print_summary():
@@ -172,11 +180,46 @@ $ source .venv/bin/activate
 
 
 def main():
+    # want to check if the user wants to install the apache stuff also.
+    usage = "%prog [options]"
+
+    parser = OptionParser(usage=usage)
+
+    parser.add_option("-a", "--apache", dest="apache", action="store_true",
+        help="install apache config files for middleware proxies", 
+        default=True)
+
+    parser.add_option("--no-apache", dest="apache", action="store_false")
+
+    parser.add_option("-d", "--database", dest="database", action="store_true",
+        help="install database config files for middleware proxies", 
+        default=True)
+
+    parser.add_option("--no-database", dest="database", action="store_false")
+
+    parser.add_option("-l", "--logdir", dest="logdir", action="store_true",
+        help="install logdir config files for middleware proxies", 
+        default=True)
+
+    parser.add_option("--no-logdir", dest="logdir", action="store_false")
+
+    (options, _) = parser.parse_args()
+
     check_dependencies()
     create_virtualenv()
     install_dependencies()
-    install_tukey()
-    install_database()
+    
+    # pretty sure this is not needed
+    #install_tukey()
+    if options.database:
+        install_database()
+
+    if options.database:
+        create_log_dir()
+
+    if options.apache:
+        create_apache_config()
+
     print_summary()
 
 if __name__ == '__main__':
