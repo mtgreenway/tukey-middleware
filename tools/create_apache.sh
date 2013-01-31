@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Needs help!!
 # Populate Apache configuration.
 # You will need to enable the sites after running this script.
 
