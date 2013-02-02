@@ -440,6 +440,8 @@ def main():
     middleware_dir = sys.argv[1]
     config_dir = "tukey_cli/etc/enabled"
 
+    os.mkdir(os.path.join(middleware_dir, config_dir))
+
     # lets build some config files !
     count = 1
     all_statement = ''
