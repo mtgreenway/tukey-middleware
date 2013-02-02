@@ -1,0 +1,31 @@
+# Information about what clouds tukey should support
+# used by config_gen.py
+clouds = [
+    {
+        "cloud_name": "Adler",
+        "cloud_id": "adler",
+        "cloud_type": "eucalyptus",
+        "handle_login_keys": True,
+        "gpg_fingerprint": 'FC9B3EC071DE820529E974BDF28152B028BC3A6D',
+        "gpg_passphrase": '',
+        # assumed to be in tukey_cli/etc/keys
+        "gpg_login_pubkey": 'adler.pub',
+        "login_host": "10.103.112.1",
+        "login_port": 5005
+    },
+    {
+        "cloud_name": "Sullivan",
+        "cloud_id": "sullivan",
+        "cloud_type": "openstack",
+        "handle_login_keys": True,
+        "nova_host": "10.103.114.3",
+        "nova_port": 8774,
+        "keystone_host": "10.103.114.3",
+        "keystone_port": 5000,
+        "gpg_fingerprint": 'FC9B3EC071DE820529E974BDF28152B028BC3A6D',
+        "gpg_passphrase": '',
+        "gpg_login_pubkey": 'sullivan.pub',
+        "login_host": "10.103.114.1",
+        "login_port": 5005
+    }
+]
