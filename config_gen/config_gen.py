@@ -56,7 +56,19 @@ class ConfigBuilder(object):
 
         self._write_file(file_name, self.configuration())
 
+    def _usage(self):
+        ''' Return the usgage string tailored to this cloud. Should be
+        what would appear after 'os-simple-tenant-usage: ' '''
+
+        if self.cloud["usage_cloud"]:
+            return "".join([self.middleware_dir, "/tools/with_venv.sh python ",
+                self.middleware_dir, "/tukey_cli/tools/get_usage.py ${start} ${end} ${",
+                self.cloud["cloud_id"], self.username(), "}"])
+        else:
+            return "echo [{}]"
+
     def _write_login_config(self):
+        ''' Write the config file for the login node '''
         file_name = os.path.join(self.middleware_dir, self.config_dir,
             "".join(["login", self.cloud["cloud_id"]]))
 
@@ -140,7 +152,7 @@ class OpenStackConfigBuilder(ConfigBuilder):
     def configuration(self):
         ''' build the configuration specific to this cloud '''
 
-        return '''[proxy]
+        return "".join(['''[proxy]
 host: %(nova_host)s
 port: %(nova_port)s
 
@@ -166,8 +178,8 @@ command: if [ '${%(cloud_id)s/access/user/username}' = '$'{%(cloud_id)s/access/u
 os-simple-tenant-usage: if [ '${detailed}' = '1' ]; then
         echo "#proxy"
     else
-        echo [{}]
-    fi''' % self.cloud
+        ''', self._usage(), '''
+    fi''']) % self.cloud
 
 
 class EucalyptusConfigBuilder(ConfigBuilder):
@@ -261,7 +273,7 @@ os-quota-sets: %(venv)s python %(command_base)stools/eucalyptus/get_quota.py 10.
 os-simple-tenant-usage: if [ '${detailed}' = '1' ]; then
        echo [{}]
     else
-        %(venv)s python %(command_base)stools/get_usage.py sullivan ${start} ${end} ${username} ${access/user/username}
+        %(venv)s python %(command_base)stools/get_usage.py ${start} ${end} ${username} ${access/user/username}
     fi
 
 [transformations:listSizes]

@@ -12,6 +12,7 @@ INSTALL_PRE=true
 
 LOCAL_SETTINGS_FILE=/home/ubuntu/local_settings.py
 CONFIG_GEN_SETTINGS_FILE=/home/ubuntu/settings.py
+PGP_KEY_DIR=/home/ubuntu/keys
 
 MIDDLEWARE_REPO=ssh://git@source.bionimbus.org/home/git/tukey-middleware.git
 TEMP_DIR=tukey-middleware
@@ -137,3 +138,7 @@ done
 # Create configuration files from templates
 ln -s $CONFIG_GEN_SETTINGS_FILE $MIDDLEWARE_DIR/config_gen/settings.py
 python $MIDDLEWARE_DIR/config_gen/config_gen.py $MIDDLEWARE_DIR
+
+# linking pgp public keys 
+
+ln -s $PGP_KEYDIR $MIDDLEWARE_DIR/tukey_cli/etc/keys

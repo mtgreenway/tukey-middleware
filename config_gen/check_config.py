@@ -41,7 +41,8 @@ def _iff_required(attr, value, cloud_dict, required):
     else:
         for cloud_attr in cloud_dict.keys():
             if cloud_attr in required:
-                log_config_error('Field %s requires "%s" %s' % (cloud_attr, attr, value))
+                log_config_error('Field %s requires "%s" %s' % (cloud_attr,
+                    attr, value))
                 return False
 
     return True
@@ -49,17 +50,23 @@ def _iff_required(attr, value, cloud_dict, required):
 def check_config(clouds):
     '''Check the list of dictionaries that have the cloud info to make sure
     that the attributes are expected not duplicated and make sense in terms
-    of the "cloud_type"'''
+    of the "cloud_type".  NOTE: Returns early '''
 
     # required fields
     required = ["cloud_name", "cloud_id", "cloud_type", "handle_login_keys"]
 
     # required if and only if "cloud_type" is openstack
-    required_openstack = ["nova_host", "nova_port", "keystone_host", "keystone_port"]
+    required_openstack = ["nova_host", "nova_port", "keystone_host",
+        "keystone_port"]
 
     # required if and only if "handle_login_keys"
     required_login = ["gpg_fingerprint", "gpg_passphrase", "gpg_login_pubkey",
         "login_host", "login_port"]
+
+    # make sure there is only one true value and at least one
+    one_true = ["usage_cloud"]
+
+    have_one_counts = {val: 0 for val in one_true}
 
     # all of the attributes we have looked at so far
     known_attributes = required + required_openstack + required_login
@@ -87,4 +94,14 @@ def check_config(clouds):
         if cloud["cloud_type"].lower() not in cloud_types:
             log_config_error("Unknown cloud_type %s" % cloud["cloud_type"])
             return False
+
+        for val in one_true:
+            if val in cloud.keys() and cloud[val]:
+                have_one_counts[val] += 1
+
+    for (key, count) in have_one_counts.items():
+        if count != 1:
+            log_config_error("Attribute %s must be true exactly once" % key)
+            return False
+
     return True

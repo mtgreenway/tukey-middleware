@@ -11,7 +11,11 @@ clouds = [
         # assumed to be in tukey_cli/etc/keys
         "gpg_login_pubkey": 'adler.pub',
         "login_host": "10.103.112.1",
-        "login_port": 5005
+        "login_port": 5005,
+	# This can only be true for one cloud
+	# query usage datbase based on the username for this
+	# cloud.  In future releases this will be deprecated
+	"usage_cloud": True
     },
     {
         "cloud_name": "Sullivan",
@@ -26,6 +30,7 @@ clouds = [
         "gpg_passphrase": '',
         "gpg_login_pubkey": 'sullivan.pub',
         "login_host": "10.103.114.1",
-        "login_port": 5005
+        "login_port": 5005,
+	"usage_cloud": False
     }
 ]
