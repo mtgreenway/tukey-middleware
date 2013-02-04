@@ -142,3 +142,6 @@ python $MIDDLEWARE_DIR/config_gen/config_gen.py $MIDDLEWARE_DIR
 # linking pgp public keys 
 
 ln -s $PGP_KEYDIR $MIDDLEWARE_DIR/tukey_cli/etc/keys
+
+# Workaround m2crypto bug
+cp /usr/lib/pyshared/python2.7/M2Crypto/__m2crypto.so $MIDDLEWARE_DIR/.venv/local/lib/python2.7/site-packages/M2Crypto/__m2crypto.so
