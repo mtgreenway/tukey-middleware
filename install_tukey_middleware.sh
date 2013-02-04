@@ -3,27 +3,7 @@
 # Somewhat sloppy but hopefully complete script for installing the 
 # tukey middleware.  Meant mostly for thourough documentation.
 
-AUTH_PORT=5000
-NOVA_PORT=8774
-GLANCE_PORT=9292
-
-CLONE_MIDDLEWARE=true
-INSTALL_PRE=true
-
-LOCAL_SETTINGS_FILE=/home/ubuntu/local_settings.py
-CONFIG_GEN_SETTINGS_FILE=/home/ubuntu/settings.py
-PGP_KEY_DIR=/home/ubuntu/keys
-
-MIDDLEWARE_REPO=ssh://git@source.bionimbus.org/home/git/tukey-middleware.git
-TEMP_DIR=tukey-middleware
-
-# make this be an absolute url
-MIDDLEWARE_DIR=/var/www/tukey/tukey-middleware
-
-#TUKEY_USER=tukey
-TUKEY_USER=ubuntu
-#TUKEY_GROUP=tukey
-TUKEY_GROUP=ubuntu
+. install_settings.sh
 
 if $INSTALL_PRE
 then
@@ -68,7 +48,6 @@ cd $MIDDLEWARE_DIR
 python tools/install_venv.py --no-apache
 
 
-APACHE_SITES_AVAILABLE=/etc/apache2/sites-available
 
 # need to configure these bad boys first 
 
@@ -142,6 +121,3 @@ python $MIDDLEWARE_DIR/config_gen/config_gen.py $MIDDLEWARE_DIR
 # linking pgp public keys 
 
 ln -s $PGP_KEYDIR $MIDDLEWARE_DIR/tukey_cli/etc/keys
-
-# Workaround m2crypto bug
-cp /usr/lib/pyshared/python2.7/M2Crypto/__m2crypto.so $MIDDLEWARE_DIR/.venv/local/lib/python2.7/site-packages/M2Crypto/__m2crypto.so
