@@ -97,7 +97,7 @@ NameVirtualHost localhost:$GLANCE_PORT
 
 WSGIScriptAlias / $MIDDLEWARE_DIR/tukey_cli/glance_wsgi.py
 
-WSGIDaemonProcess glance-api user=ubuntu group=ubuntu processes=3 threads=1 python-path=$MIDDLEWARE_DIR/local:$MIDDLEWARE_DIR/tukey_cli:$MIDDLEWARE_DIR/.venv/lib/python2.7/site-packages:$MIDDLEWARE_DIR/.venv/local/lib/python2.7/site-packages
+WSGIDaemonProcess glance-api user=$TUKEY_USER group=$TUKEY_GROUP processes=3 threads=1 python-path=$MIDDLEWARE_DIR/local:$MIDDLEWARE_DIR/tukey_cli:$MIDDLEWARE_DIR/.venv/lib/python2.7/site-packages:$MIDDLEWARE_DIR/.venv/local/lib/python2.7/site-packages
 
 WSGIProcessGroup glance-api
 
