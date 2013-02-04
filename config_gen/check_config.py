@@ -69,7 +69,7 @@ def check_config(clouds):
     have_one_counts = {val: 0 for val in one_true}
 
     # all of the attributes we have looked at so far
-    known_attributes = required + required_openstack + required_login
+    known_attributes = required + required_openstack + required_login + one_true
 
     # possible clouds
     cloud_types = ["openstack", "eucalyptus"]
