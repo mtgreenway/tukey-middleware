@@ -162,9 +162,9 @@ host:   %(keystone_host)s
 port:   %(keystone_port)s
 
 [tag]
-cloud: Sullivan %(cloud_name)s
-cloud_name: Sullivan %(cloud_name)s
-cloud_id: sullivan %(cloud_id)s
+cloud: %(cloud_name)s
+cloud_name: %(cloud_name)s
+cloud_id: %(cloud_id)s
 
 [enabled]
 command: if [ '${%(cloud_id)s/access/user/username}' = '$'{%(cloud_id)s/access/user/username} ]; then

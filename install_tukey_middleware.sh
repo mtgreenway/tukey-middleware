@@ -121,3 +121,5 @@ python $MIDDLEWARE_DIR/config_gen/config_gen.py $MIDDLEWARE_DIR
 # linking pgp public keys 
 
 ln -s $PGP_KEYDIR $MIDDLEWARE_DIR/tukey_cli/etc/keys
+
+echo "Please edit auth_proxy/iptables.py to have proper settings then RUN!!!"

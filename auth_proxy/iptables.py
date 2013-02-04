@@ -9,12 +9,12 @@ def apply_iptables_rules():
     rules = [ 
         '-t nat -N tukey_auth_proxy',
         '-t nat -A OUTPUT -j tukey_auth_proxy',
-        '-t nat -A tukey_auth_proxy -p tcp -m tcp -d %(host)s --dport 35357 -j REDIRECT --to-ports %(port)s'
+        '-t nat -A tukey_auth_proxy -p tcp -m tcp -s %(host)s -d %(host)s --dport 35357 -j REDIRECT --to-ports %(port)s'
     ]
 
     # this is brittle where do we get these from??
     # maybe webob can tell us what port and host?
-    run_time_settings = {'host': '127.0.0.1', 'port': '5000'}
+    run_time_settings = {'host': '127.0.0.1', 'port': '5100'}
 
     for rule in rules:
 
