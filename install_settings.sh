@@ -3,9 +3,9 @@
 # Somewhat sloppy but hopefully complete script for installing the 
 # tukey middleware.  Meant mostly for thourough documentation.
 
-AUTH_PORT=5100
-NOVA_PORT=8875
-GLANCE_PORT=9392
+AUTH_PORT=5000
+NOVA_PORT=8774
+GLANCE_PORT=9292
 
 CLONE_MIDDLEWARE=true
 

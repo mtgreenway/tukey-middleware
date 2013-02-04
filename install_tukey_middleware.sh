@@ -45,7 +45,7 @@ cd $MIDDLEWARE_DIR
 # No apache:			--no-apache
 
 # do the apache stuff ourself
-python tools/install_venv.py --no-apache
+python tools/install_venv.py --no-apache --no-database
 
 
 
