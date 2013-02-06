@@ -36,7 +36,8 @@ class ConfigBuilder(object):
     should create a login server configuration file and. Thats pretty much it
     '''
 
-    def build(self, cloud, middleware_dir, config_dir):
+    def build(self, cloud, middleware_dir, config_dir, config,
+        proxy_host='127.0.0.1', nova_proxy_port=8774):
         ''' Generic build sets vars and controls flow '''
         self.cloud = cloud
         self.middleware_dir = middleware_dir
@@ -72,13 +73,13 @@ class ConfigBuilder(object):
         file_name = os.path.join(self.middleware_dir, self.config_dir,
             "".join(["login", self.cloud["cloud_id"]]))
 
-        login_config = '''[tag]
+        login_config = "".join(['''[tag]
 cloud: %(cloud_name)s Login Node
 cloud_name: %(cloud_name)s Login Node
 cloud_id: login%(cloud_id)s
 
 [enabled]
-command: if [ '${%(cloud_id)s/username}' = '$'{%(cloud_id)s/username} ]; then
+command: if [ '${%(cloud_id)s''', self.username(), "}' = '$'{%(cloud_id)s", self.username(), '''} ]; then
         false
     else
         true
@@ -86,13 +87,13 @@ command: if [ '${%(cloud_id)s/username}' = '$'{%(cloud_id)s/username} ]; then
 
 [commands]
 basedir=%(middleware_dir)s
-gpg_home=%(middleware_dir)s/.gnupg
+gpg_home=%(middleware_dir)s/../.gnupg
 fingerprint='%(gpg_fingerprint)s'
 passphrase='%(gpg_passphrase)s'
 host=%(login_host)s:%(login_port)s
 resource=%(cloud_id)s
 username=${%(cloud_id)s/username}
-keyname=%(cloud_id)s.pub''' % { "cloud_id": self.cloud["cloud_id"],
+keyname=%(cloud_id)s.pub''']) % { "cloud_id": self.cloud["cloud_id"],
             "cloud_name": self.cloud["cloud_name"],
             "middleware_dir": self.middleware_dir,
             "gpg_fingerprint": self.cloud["gpg_fingerprint"],
@@ -135,9 +136,9 @@ os-keypairs: if [ '${method}' = 'POST' ]; then
         cloud is enabled do to the user tokens appearing. sorry'''
 
         return "".join([ '''if [ '${%(cloud_id)s%(username_pattern)s}' = '$'{%(cloud_id)s%(username_pattern)s} ]; then
-        %(echo_command)s ''', "'[" if is_first else "'", ']' if is_last else '', ''' '
+        %(echo_command)s ''', "'[" if is_first else "'", ']' if is_last else '', ''''
     else
-        %(echo_command)s ''', "'[" if is_first else "',", ' "%(cloud_id)s" ', ',"login%(cloud_id)s"' if self.cloud["handle_login_keys"] else '', ']' if is_last else '', ''' '
+        %(echo_command)s ''', "'[" if is_first else "',", ' "%(cloud_id)s"', ',"login%(cloud_id)s"' if self.cloud["handle_login_keys"] else '', ']' if is_last else '', ''''
     fi ''']) % {"cloud_id": self.cloud["cloud_id"], "echo_command": "echo -n", "username_pattern": self.username()}
 
 
@@ -297,11 +298,11 @@ image: {
     "links" [
     {
         "rel" "self",
-        "href" "http://127.0.0.1:8774/v1.1/${username}/images/$(extra/imageId)"
+        "href" "http://%(proxy_host)s:%(nova_proxy_port)s/v1.1/${username}/images/$(extra/imageId)"
     },
     {
         "rel" "bookmark",
-        "href" "http://127.0.0.1:8774/${username}/images/$(extra/imageId)"
+        "href" "http://%(proxy_host)s:%(nova_proxy_port)s/${username}/images/$(extra/imageId)"
     }
     ]
     }
@@ -310,11 +311,11 @@ flavor: {
     "links" [
     {
         "rel" "self",
-        "href" "http://127.0.0.1:8774/v1.1/${username}/flavors/$(extra/instancetype)"
+        "href" "http://%(proxy_host)s:%(nova_proxy_port)s/v1.1/${username}/flavors/$(extra/instancetype)"
     },
     {
         "rel" "bookmark",
-        "href" "http://127.0.0.1:8774/${username}/flavors/$(extra/instancetype)"
+        "href" "http://%(proxy_host)s:%(nova_proxy_port)s/${username}/flavors/$(extra/instancetype)"
     }
     ]
     }
@@ -330,11 +331,11 @@ metadata: {}
 links: [
     {
     "rel" "self",
-    "href" "http://127.0.0.1:8774/v1.1/${username}/servers/$(id)"
+    "href" "http://%(proxy_host)s:%(nova_proxy_port)s/v1.1/${username}/servers/$(id)"
     },
     {
     "rel" "bookmark",
-    "href" "http://127.0.0.1:8774/${username}/servers/$(id)"
+    "href" "http://%(proxy_host)s:%(nova_proxy_port)s/${username}/servers/$(id)"
     }
     ]
 
@@ -357,11 +358,11 @@ image: {
     "links" [
         {
             "rel" "self",
-            "href" "http://127.0.0.1:8774/v1.1/${username}/images/$(extra/imageId)"
+            "href" "http://%(proxy_host)s:%(nova_proxy_port)s/v1.1/${username}/images/$(extra/imageId)"
         },
         {
             "rel" "bookmark",
-            "href" "http://127.0.0.1:8774/${username}/images/$(extra/imageId)"
+            "href" "http://%(proxy_host)s:%(nova_proxy_port)s/${username}/images/$(extra/imageId)"
         }
     ]
     }
@@ -371,11 +372,11 @@ flavor: {
     "links" [
         {
             "rel" "self",
-            "href" "http://127.0.0.1:8774/v1.1/${username}/flavors/$(extra/instancetype)"
+            "href" "http://%(proxy_host)s:%(nova_proxy_port)s/v1.1/${username}/flavors/$(extra/instancetype)"
         },
         {
             "rel" "bookmark",
-            "href" "http://127.0.0.1:8774/${username}/flavors/$(extra/instancetype)"
+            "href" "http://%(proxy_host)s:%(nova_proxy_port)s/${username}/flavors/$(extra/instancetype)"
         }
     ]
     }
@@ -393,11 +394,11 @@ metadata: {}
 links: [
     {
         "rel" "self",
-        "href" "http://127.0.0.1:8774/v1.1/${username}/servers/$(id)"
+        "href" "http://%(proxy_host)s:%(nova_proxy_port)s/v1.1/${username}/servers/$(id)"
     },
     {
         "rel" "bookmark",
-        "href" "http://127.0.0.1:8774/${username}/servers/$(id)"
+        "href" "http://%(proxy_host)s:%(nova_proxy_port)s/${username}/servers/$(id)"
     }
     ]
 
@@ -416,10 +417,10 @@ metadata: {}
 links:  [
                 {
                     "rel" "self",
-                    "href" "http://127.0.0.1/v1.1/${username}/images/${id}"                },
+                    "href" "http://%(proxy_host)s/v1.1/${username}/images/${id}"                },
                 {
                     "rel" "bookmark",
-                    "href" "http://127.0.0.1/${username}/images/${id}"}
+                    "href" "http://%(proxy_host)s/${username}/images/${id}"}
             ]
 
 [transformations:os-keypairs]
@@ -435,7 +436,7 @@ launchVm:   result
 
 [auth]
 driver: EucalyptusAuth
-'''])
+''']) % {"proxy_host": self.proxy_host, "nova_proxy_port": self.nova_proxy_port}
         return config
 
 def main():
@@ -478,9 +479,8 @@ def main():
     all_statement = "".join(['''[commands]
 middledir=%(middleware_dir)s
 venv=%(middleware_dir)s/tools/with_venv.sh
-clouds='[''' % {"middleware_dir": middleware_dir}, cloud_ids[:-1], ''' ]'
 script_file=%(middledir)s/auth_proxy/multiple_keys.py
-script=%(venv)s python %(script_file)s ${auth-project-id} ${auth-token} '${name}' $( \\ ''', all_statement[:-3], ''')
+script=%(venv)s python %(script_file)s ${auth-project-id} ${auth-token} '${name}' $( ''', all_statement[:-3], ''')
 
 os-keypairs: if [ '${method}' = 'POST' ]; then
                 if [ '${public_key}'  = '$'{public_key} ]; then
