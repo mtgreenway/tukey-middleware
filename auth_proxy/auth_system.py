@@ -126,22 +126,22 @@ class FakeId(object):
         proxy_info = locals()
 
         endpoints = [
-            Endpoint(
+            FakeId.Endpoint(
                 "".join(["http://%(host)s:", "%d" % self.glance_port , "/v1"]),
                 "".join(["http://%(host)s:", "%d" % self.glance_port , "/v1"]),
                 "image",
                 "Image Service"),
-            Endpoint(
+            FakeId.Endpoint(
                 "".join(["http://%(host)s:", "%d" % self.nova_port, "/v1.1/%(tenant_id)s"]),
                 "".join(["http://%(host)s:", "%d" % self.nova_port, "/v1.1/%(tenant_id)s"]),
                 "compute",
                 "Compute Service"),
-            Endpoint(
+            FakeId.Endpoint(
                 "".join(["http://%(host)s:", "%d" % self.ec2_port, "/services/Admin"]),
                 "".join(["http://%(host)s:", "%d" % self.ec2_port, "/services/Cloud"]),
                 "ec2",
                 "EC2 Service"),
-            Endpoint(
+            FakeId.Endpoint(
                 "".join(["http://%(host)s:", "%d" % self.identity_admin_port, "/v2.0"]),
                 "".join(["http://%(host)s:", "%d" % self.identity_port, "/v2.0"]),
                 "identity",
