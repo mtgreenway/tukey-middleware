@@ -21,6 +21,7 @@ import sys
 
 from check_config import check_config
 
+
 def write_file(file_name, text):
     ''' Write text to file filename '''
     config_file = open(file_name, 'w')
@@ -30,18 +31,20 @@ def write_file(file_name, text):
 #    print text
 
 
-
 class ConfigBuilder(object):
     ''' Base configuration builder to handle things such as what do we do if we
     should create a login server configuration file and. Thats pretty much it
     '''
 
-    def build(self, cloud, middleware_dir, config_dir, config,
-        proxy_host='127.0.0.1', nova_proxy_port=8774):
+    def build(self, cloud, middleware_dir, config_dir, proxy_host='127.0.0.1',
+        nova_proxy_port=8774):
         ''' Generic build sets vars and controls flow '''
+
         self.cloud = cloud
         self.middleware_dir = middleware_dir
         self.config_dir = config_dir
+        self.proxy_host = proxy_host
+        self.nova_proxy_port = nova_proxy_port
 
         self._write_configuration()
 
@@ -63,7 +66,8 @@ class ConfigBuilder(object):
 
         if self.cloud["usage_cloud"]:
             return "".join([self.middleware_dir, "/tools/with_venv.sh python ",
-                self.middleware_dir, "/tukey_cli/tools/get_usage.py ${start} ${end} ${",
+                self.middleware_dir,
+                "/tukey_cli/tools/get_usage.py ${start} ${end} ${",
                 self.cloud["cloud_id"], self.username(), "}"])
         else:
             return "echo [{}]"
@@ -79,7 +83,8 @@ cloud_name: %(cloud_name)s Login Node
 cloud_id: login%(cloud_id)s
 
 [enabled]
-command: if [ '${%(cloud_id)s''', self.username(), "}' = '$'{%(cloud_id)s", self.username(), '''} ]; then
+command: if [ '${%(cloud_id)s''', self.username(), "}' = '$'{%(cloud_id)s",
+            self.username(), '''} ]; then
         false
     else
         true
@@ -93,7 +98,7 @@ passphrase='%(gpg_passphrase)s'
 host=%(login_host)s:%(login_port)s
 resource=%(cloud_id)s
 username=${%(cloud_id)s/username}
-keyname=%(cloud_id)s.pub''']) % { "cloud_id": self.cloud["cloud_id"],
+keyname=%(cloud_id)s.pub''']) % {"cloud_id": self.cloud["cloud_id"],
             "cloud_name": self.cloud["cloud_name"],
             "middleware_dir": self.middleware_dir,
             "gpg_fingerprint": self.cloud["gpg_fingerprint"],
@@ -135,12 +140,11 @@ os-keypairs: if [ '${method}' = 'POST' ]; then
         ''' create the portion of the "all" config file where we see if this
         cloud is enabled do to the user tokens appearing. sorry'''
 
-        return "".join([ '''if [ '${%(cloud_id)s%(username_pattern)s}' = '$'{%(cloud_id)s%(username_pattern)s} ]; then
+        return "".join(['''if [ '${%(cloud_id)s%(username_pattern)s}' = '$'{%(cloud_id)s%(username_pattern)s} ]; then
         %(echo_command)s ''', "'[" if is_first else "'", ']' if is_last else '', ''''
     else
         %(echo_command)s ''', "'[" if is_first else "',", ' "%(cloud_id)s"', ',"login%(cloud_id)s"' if self.cloud["handle_login_keys"] else '', ']' if is_last else '', ''''
     fi ''']) % {"cloud_id": self.cloud["cloud_id"], "echo_command": "echo -n", "username_pattern": self.username()}
-
 
 
 class OpenStackConfigBuilder(ConfigBuilder):
@@ -209,7 +213,6 @@ cloud_id: %(cloud_id)s
 basedir=%(middleware_dir)s''' % {"middleware_dir": self.middleware_dir,
             "cloud_id": self.cloud["cloud_id"],
             "cloud_name": self.cloud["cloud_name"]}
-
 
         config = "\n".join([config, '''command_base=%(basedir)s/tukey_cli/
 venv=%(basedir)s/tools/with_venv.sh
@@ -439,6 +442,7 @@ driver: EucalyptusAuth
 ''']) % {"proxy_host": self.proxy_host, "nova_proxy_port": self.nova_proxy_port}
         return config
 
+
 def main():
     #for cloud in settings.clouds
     if not check_config(settings.clouds):
@@ -455,10 +459,12 @@ def main():
 
     os.mkdir(os.path.join(middleware_dir, config_dir))
 
+    host_and_ports = getattr(settings, "host_and_ports",
+        {"host": "127.0.0.1", "nova_port": 8874})
+
     # lets build some config files !
     count = 1
     all_statement = ''
-    cloud_ids = ''
     for cloud in settings.clouds:
 
         # factory
@@ -467,10 +473,11 @@ def main():
         if cloud["cloud_type"].lower() == "openstack":
             config_builder = OpenStackConfigBuilder()
 
-        config_builder.build(cloud, middleware_dir, config_dir)
+        config_builder.build(cloud, middleware_dir, config_dir,
+            proxy_host=host_and_ports["host"],
+            nova_proxy_port=host_and_ports["nova_port"])
 
         # build the all file
-        cloud_ids += '"%s",' % cloud["cloud_id"]
         all_statement += config_builder.get_all_statement(count == 1,
             count == len(settings.clouds)) + '; \\'
 
@@ -482,15 +489,11 @@ venv=%(middleware_dir)s/tools/with_venv.sh
 script_file=%(middledir)s/auth_proxy/multiple_keys.py
 script=%(venv)s python %(script_file)s ${auth-project-id} ${auth-token} '${name}' $( ''', all_statement[:-3], ''')
 
-os-keypairs: if [ '${method}' = 'POST' ]; then
-                if [ '${public_key}'  = '$'{public_key} ]; then
-                    %(script)s POST
+os-keypairs: if [ '${public_key}'  = '$'{public_key} ]; then
+                    %(script)s
                 else
-                    %(script)s POST '${public_key}'
+                    %(script)s '${public_key}'
                 fi
-        elif [ '${method}' = 'DELETE' ]; then
-            %(script)s DELETE
-        fi
 
 [tag]
 cloud: All Resources

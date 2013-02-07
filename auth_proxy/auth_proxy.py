@@ -22,7 +22,7 @@ import os
 import sys
 
 from ConfigParser import ConfigParser
-from auth_system import OpenStackAuth, EucalyptusAuth
+from auth_system import OpenStackAuth, EucalyptusAuth, TestAuth
 from glob import glob
 from os import path, sep
 from webob import Request, Response
@@ -36,30 +36,30 @@ import local_settings
 
 class AuthProxy(object):
     '''Proxy to sit between Horizon and Keystone.
-    
+
     This proxy provides two main features:
-    
+
     1. Creates an association between keystone auth-tokens and auth
     details of other cloud authentication systems as well as creating
-    fake keystone auth information when the current user has only 
+    fake keystone auth information when the current user has only
     authenticated against other cloud systems.
-    
+
     2. Authenticates users to Keystone and other cloud auth systems
     using identifiers  provided by systems such as OpenID and Shibboleth
-    
-    Assumes that each Keystone token request will be 
+
+    Assumes that each Keystone token request will be
     {"auth":{"passwordCredentials":{"username":identifier,"password":method}}}
-    
+
     for example:
     {"auth":{"passwordCredentials":
         {"username":test@yahoo.com,"password":openid}
     }}
-    
+
     Uses memcached to store the associations which can then be used by
     other middle ware between Horizon and cloud services.
     '''
 
-    def __init__(self, keystone_host, keystone_port, memcache_host, 
+    def __init__(self, keystone_host, keystone_port, memcache_host,
         memcache_port, conf_dir, logger):
         '''
         Define any auth systems here in self.auth_systems with the config
@@ -68,7 +68,7 @@ class AuthProxy(object):
         '''
 
         self.logger = logger
-        
+
         self.keystone_host = keystone_host
         self.keystone_port = keystone_port
 
@@ -85,35 +85,41 @@ class AuthProxy(object):
                 driver = config.get('auth', 'driver')
 
                 if driver == 'OpenStackAuth':
+                    driver_type = OpenStackAuth
 
+
+                if driver == 'EucalyptusAuth':
+                    driver_type = EucalyptusAuth
+
+                driver_object = driver_type(local_settings.API_HOST,
+                    local_settings.MEMBER_ROLE_ID,
+                    local_settings.AUTH_TOKEN_EXPIRATION,
+			glance_port=getattr(local_settings, "GLANCE_PROXY_PORT",
+                        9292),
+                    nova_port=getattr(local_settings, "NOVA_PROXY_PORT",
+                        8774),
+                    identity_port=getattr(local_settings, "AUTH_PROXY_PORT",
+                        5000),
+                    identity_admin_port=getattr(local_settings,
+                        "AUTH_ADMIN_PROXY_PORT", 35357),
+                    ec2_port=getattr(local_settings, "EC2_PROXY_PORT",
+                        8773))
+
+		if driver == 'OpenStackAuth':
                     host = config.get('auth', 'host')
                     port = config.get('auth', 'port')
 
-                    driver_object = OpenStackAuth(local_settings.API_HOST,
-                        local_settings.MEMBER_ROLE_ID, 
-                        local_settings.AUTH_TOKEN_EXPIRATION, host, port)
+		    driver_object.set_keystone_info(host, port)
 
-                if driver == 'EucalyptusAuth':
-                    driver_object = EucalyptusAuth(local_settings.API_HOST,
-                        local_settings.MEMBER_ROLE_ID,
-                        local_settings.AUTH_TOKEN_EXPIRATION)
-
-                if driver == 'TestAuth':
-                    # there are definitely smells here
-                    # set user to '' if you want it to always be false
-                    driver_object = TestAuth(local_settings.API_HOST,
-                        local_settings.MEMBER_ROLE_ID,
-                        local_settings.AUTH_TOKEN_EXPIRATION,
-                        local_settings.TEST_GLANCE_PORT,
-                        local_settings.TEST_NOVA_PORT,
-                        local_settings.TEST_EC2_PORT,
-                        local_settings.TEST_IDENTITY_ADMIN_PORT,
-                        config.get('auth', 'user'))
+#                if driver == 'TestAuth':
+#                    # there are definitely smells here
+#                    # set user to '' if you want it to always be false
+#                    driver_type = TestAuth
 
                 self.auth_systems[conf.split(sep)[-1]] = driver_object
 
         memcache_string = '%s:%s' % (memcache_host, memcache_port)
-                
+
         self.mc = memcache.Client([memcache_string], debug=0)
 
 
@@ -130,8 +136,8 @@ class AuthProxy(object):
     def __tenant_request(self, req):
         '''
         :param req:    webob Request
-        
-        Use the auth token from Horizon to to either forward request to 
+
+        Use the auth token from Horizon to to either forward request to
         Keystone if the user has an authorized OpenStack account otherwise
         return the fake tenant data
         '''
@@ -145,7 +151,7 @@ class AuthProxy(object):
             identifier = req.headers["x-auth-user"]
             _, token = self.__authenticate(method, identifier)
 
-        
+
         user_info = self.mc.get(str(token))
 
         if self.__is_openstack(user_info):
@@ -154,14 +160,14 @@ class AuthProxy(object):
             resp = self.__forward("GET", req.path, "", req.headers)
         else:
             resp = self.__json_response(user_info['fake_tenant'])
-        
+
         return resp
-        
-    
+
+
     def __token_request(self, req):
         '''
-        :param req:    webob Request 
-        
+        :param req:    webob Request
+
         Assumes Horizon is contacting Keystone with passwordCredentials auth
         message.  However the "username" attribute will be equal to the identifier
         string and the "password" attribute will be equal to  auth method.
@@ -181,17 +187,17 @@ class AuthProxy(object):
         user_info, _ = self.__authenticate(auth_method, identifier, tenant)
 
         resp = self.__json_response(user_info)
-    
+
         if 'error' in user_info:
             resp.status = 401
-        
+
         return resp
-        
-        
+
+
     def __endpoint_request(self, req):
         '''
         :param req:    webob Request
-        
+
         Returns the massive endpoint info JSON.
         '''
         #if 'x-auth-token' not in req.headers:
@@ -199,27 +205,27 @@ class AuthProxy(object):
         #    auth_method = req.headers["x-auth-key"]
         #    identifier = req_body["auth"]["passwordCredentials"]["username"]
         #    self.__authenticate
-            
+
         user_info = self.mc.get(req.headers['x-auth-token'])
 
         if self.__is_openstack(user_info):
             resp = self.__forward("POST", req.path, req.body, req.headers)
         else:
             resp = self.__json_response(user_info['fake_endpoint'])
-        
+
         return resp
-        
-        
+
+
     def __authenticate(self, auth_method, identifier, tenant):
         '''
         :param auth_method: the authentication method "openid", "shibboleth"
-        :param identifier: id string could be shib EPPN like 
+        :param identifier: id string could be shib EPPN like
             "mgreenway@uchicago.edu"
-            
+
         Iterates through the auth systems stored in auth_systems dictionary
-        authenticating the id string against the method for that 
+        authenticating the id string against the method for that
         system.  If the user was not authenticated on an OpenStack auth
-        then we store "fake" info from another cloud system to use in 
+        then we store "fake" info from another cloud system to use in
         tenant and endpoint requests.
         '''
         user_info = dict()
@@ -263,10 +269,10 @@ class AuthProxy(object):
         self.mc.set(str(token), user_info, local_settings.AUTH_TOKEN_EXPIRATION)
 
         return id_info, token
-        
-        
+
+
     # HTTP, Proxy and JSON helper methods
-    
+
     def __call__(self, environ, start_response):
         '''Webob boiler plate calls action_view_GET and POST.
         '''
@@ -282,16 +288,17 @@ class AuthProxy(object):
             resp = e
         return resp(environ, start_response)
 
-        
+
     def __forward(self, method, path, body, headers):
         '''Send an HTTP request and return its webob Response.
-        
+
         :param method: the http request method "GET", "POST"
         :param path: the path of the request
         :param body: body data string
         :param headers: dictionary like object of request headers
         '''
-        conn = httplib.HTTPConnection(self.keystone_host,self.keystone_port, False)
+        conn = httplib.HTTPConnection(self.keystone_host, self.keystone_port,
+            False)
         conn.request(method, path, body, headers)
         res = conn.getresponse().read()
         conn.close()
@@ -300,16 +307,18 @@ class AuthProxy(object):
             old = self.mc.get(headers['x-auth-token'])
             self.mc.set(str(res_object['access']['token']['id']), old,
                 local_settings.AUTH_TOKEN_EXPIRATION)
-        
-          
+
+
         for old in local_settings.PROXY_REPLACE.keys():
-            self.logger.debug("REPLACEING %s with %s", old,  local_settings.PROXY_REPLACE[old])
+            self.logger.debug("REPLACEING %s with %s", old,
+                local_settings.PROXY_REPLACE[old])
             res = res.replace(old, local_settings.PROXY_REPLACE[old])
 
         for port in local_settings.PROXY_ENDPOINT_PORTS:
-            # maybe just do a regex and replace any host not just 
+            # maybe just do a regex and replace any host not just
             # the keystone host
-            res = res.replace("%s:%d" % (self.keystone_host, port), "127.0.0.1:%d" %  port)
+            res = res.replace("%s:%d" % (self.keystone_host, port),
+                "%s:%d" %  (local_settings.API_HOST, port))
 
         self.logger.debug( "Forwarded request")
         self.logger.debug(res)
@@ -317,10 +326,10 @@ class AuthProxy(object):
         resp.conditional_response = True
         return resp
 
-        
+
     def __json_response(self, serial_obj):
         '''Serialize an object into JSON then return as webob Response
-        
+
         :param serial_obj: object acceptable by json.dumps()
         '''
         resp = Response(json.dumps(serial_obj))
@@ -328,13 +337,13 @@ class AuthProxy(object):
         resp.conditional_response = True
         return resp
 
-        
+
     def action_view_GET(self, req):
         '''All GETs are request for tenant info
         '''
         return self.__tenant_request(req)
 
-        
+
     def action_view_POST(self, req):
         '''POST requests will be either endpoint or token requests.
         '''
@@ -342,9 +351,9 @@ class AuthProxy(object):
             resp = self.__endpoint_request(req)
         else:
             resp = self.__token_request(req)
-        return resp        
-    
-        
+        return resp
+
+
 if __name__ == '__main__':
     import optparse
     parser = optparse.OptionParser(
@@ -371,7 +380,7 @@ if __name__ == '__main__':
 
     options, args = parser.parse_args()
 
-    #logging settings 
+    #logging settings
     logger = logging.getLogger('tukey-auth')
 
     if options.debug:

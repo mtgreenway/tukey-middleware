@@ -3,9 +3,10 @@
 # Somewhat sloppy but hopefully complete script for installing the 
 # tukey middleware.  Meant mostly for thourough documentation.
 
-AUTH_PORT=5000
-NOVA_PORT=8774
-GLANCE_PORT=9292
+declare -A PORTS=( ["auth"]=5000 ["nova"]=8774 ["glance"]=9292)
+declare -A WSGI_DIRS=( ["auth"]="auth_proxy" ["nova"]="tukey_cli" ["glance"]="tukey_cli")
+
+PROXY_HOST="localhost"
 
 CLONE_MIDDLEWARE=true
 

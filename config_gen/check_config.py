@@ -16,6 +16,9 @@
 ''' Configuration parsing for temporary config builder script to deal with the
 nonsense I have made'''
 
+import re
+
+
 def log_config_error(error_message):
     ''' Display the error message with a wrapper '''
     print "Parsing config file failed with the following message:"
@@ -47,7 +50,73 @@ def _iff_required(attr, value, cloud_dict, required):
 
     return True
 
-def check_config(clouds):
+
+def check_config(settings):
+    ''' Check the configuration module settings.  Calls a functions for 
+    each portion of settings that should be check like cloud and 
+    hosts_and_ports '''
+
+    # required attributes of the settings module
+    required = ['clouds']
+
+    # i prefer the error where i misspell the variable name
+    host_and_ports = 'host_and_ports'
+
+    # optional modules
+    optional = [host_and_ports]
+
+    known_attributes = required + optional
+
+    # this is not required since we call a function to check the validity of 
+    # each required setting which will throw and error if the setting is not
+    # present 
+#    for attr in required:
+#        if attr not in dir(settings):
+#            log_config_error("Required settings %s missing" % attr)
+#            return False
+
+    if not check_cloud(getattr(settings, 'clouds')):
+        return False
+
+    if host_and_ports in dir(settings):
+        if not check_host_and_ports(getattr(settings, host_and_ports)):
+            return False
+
+    for setting_attr in dir(settings):
+        if setting_attr not in known_attributes and \
+            not setting_attr.startswith("__"):
+            log_config_error("Unknown setting %s" % setting_attr)
+            return False
+
+    return True
+
+def check_host_and_ports(host_and_ports):
+    ''' The settings 'host_and_ports' is to tell the config builder if the
+    proxy services will be running on a special host other than 127.0.0.1 and
+    if there will be a special port that the nova proxy will be running on 
+    other than 8874 '''
+
+    # check that if host is here is a string and if port is here it is a 
+    valid_ip = "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
+    valid_hostname = "^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$"
+
+    if re.match(valid_ip, host_and_ports["host"]) is None and \
+        re.match(valid_hostname, host_and_ports["host"]) is None:
+        log_config_error("%s is not a valid ip or hostname" % host_and_ports["host"])
+        return False 
+
+    ports = ["nova_port"]
+
+    for port in ports:
+        if port in host_and_ports:
+            if not isinstance(host_and_ports[port], int):
+                log_config_error("%s is not an integer" % port)
+                return False
+    return True
+    
+    
+
+def check_cloud(clouds):
     '''Check the list of dictionaries that have the cloud info to make sure
     that the attributes are expected not duplicated and make sense in terms
     of the "cloud_type".  NOTE: Returns early '''
@@ -105,3 +174,7 @@ def check_config(clouds):
             return False
 
     return True
+
+if __name__ == "__main__":
+    import settings
+    check_config(settings)

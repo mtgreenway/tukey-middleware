@@ -10,9 +10,9 @@
 #${sullivan/access/token/id}
 
 #${sullivan/access/user/id}
-import json 
-import logging
-import logging.handlers
+''' Performs a recursive http request to create keys on every cloud '''
+
+import json
 import os
 import requests
 import sys
@@ -23,60 +23,65 @@ from subprocess import Popen, PIPE
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../local')
 import local_settings
 
-#logging settings 
-logger = get_logger()
+#logging settings
+LOGGER = get_logger()
 
-headers = {
-    'Host': '127.0.0.1:8774',
+HOST = '%s:%s' % (local_settings.API_HOST, local_settings.NOVA_PROXY_PORT)
+
+HEADERS = {
+    'Host': HOST,
     'Accept': 'application/json',
     'User-Agent': 'python-novaclient',
     'Content-Type': 'application/json',
     'Accept-Encoding': 'gzip, deflate'
 }
-
-
-def delete_keypair(project_id, auth_token, name, cloud):
-    
-    headers['X-Auth-Project-Id'] = project_id
-    headers['X-Auth-Token']  = auth_token
-
-    url = 'http://127.0.0.1:8774/v1.1/%s/os-keypairs/%s-%s' % (project_id,
-         cloud, name)
-
-    return requests.request('DELETE', url, headers=headers, data=keypair)
+# unused
+#def delete_keypair(project_id, auth_token, name, cloud):
+#
+#    headers['X-Auth-Project-Id'] = project_id
+#    headers['X-Auth-Token']  = auth_token
+#
+#    url = 'http://127.0.0.1:8774/v1.1/%s/os-keypairs/%s-%s' % (project_id,
+#         cloud, name)
+#
+#    # NOTE: if you ever need to use this keypair is undefined so fix that!
+#    return requests.request('DELETE', url, headers=headers, data=keypair)
+#
 
 
 def create_keypair(project_id, auth_token, name, cloud, public_key=None):
+    ''' Recursively call the nova proxy with a os-keypairs create key request
+    '''
 
-    headers['X-Auth-Project-Id'] = project_id
-    headers['X-Auth-Token'] = auth_token
+    HEADERS['X-Auth-Project-Id'] = project_id
+    HEADERS['X-Auth-Token'] = auth_token
 
-    url = 'http://127.0.0.1:8774/v1.1/%s/os-keypairs' % project_id
-    
+    url = 'http://%s/v1.1/%s/os-keypairs' % (HOST, project_id)
+
     keypair = {
         "keypair":  {
             "name": cloud + '-' + name
         }
     }
-    
+
     if public_key is not None:
         keypair["keypair"]["public_key"] = public_key
 
-    logger.debug(public_key)
-    
+    LOGGER.debug(public_key)
+
     keypair_string = json.dumps(keypair)
 
-    headers['Content-Length'] = str(len(keypair_string))
-    # may need to be jsonised 
-    logger.debug("about to dispatch")
+    HEADERS['Content-Length'] = str(len(keypair_string))
+    # may need to be jsonised
+    LOGGER.debug("about to dispatch")
 
-    response = requests.post(url, headers=headers, data=keypair_string)
+    response = requests.post(url, headers=HEADERS, data=keypair_string)
 
     if response.status_code != 200:
         print '{"message": "Not all keypairs could be created.", "code": 409}'
         sys.exit(1)
 
-    logger.debug(response.text)
+    LOGGER.debug(response.text)
 
     return response.text
 
@@ -85,9 +90,8 @@ def main():
     project_id = sys.argv[1]
     auth_token = sys.argv[2]
     name = sys.argv[3]
-    logger.debug(sys.argv[4])
+    LOGGER.debug(sys.argv[4])
     clouds = json.loads(sys.argv[4])
-    method = sys.argv[5]
 
     public_key = None
 
@@ -96,14 +100,14 @@ def main():
     if len(sys.argv) > 6:
         #if importing
         public_key = ' '.join(sys.argv[6:])
-        logger.debug("PUB KEY %s", public_key)
+        LOGGER.debug("PUB KEY %s", public_key)
     else:
         cloud = clouds[0]
         clouds.remove(cloud)
         keypair_string = create_keypair(project_id, auth_token, name,
             cloud)
 
-        logger.debug(keypair_string)
+        LOGGER.debug(keypair_string)
         created_keypair = json.loads(keypair_string)
         if 'keypair' in created_keypair['keypair']:
             created_keypair = created_keypair['keypair']
@@ -111,12 +115,14 @@ def main():
 
         # Eucalyptus will not give us a pubkey
         if public_key == "":
-            private_key = created_keypair['keypair']['private_key'].replace('\n','\\\\n')
-            command = "/bin/echo -e %s |" + local_settings.SSH_KEYGEN_COMMAND + " -y -f /dev/stdin"
-            logger.debug(command % private_key)
+            private_key = created_keypair['keypair']['private_key'].replace(
+                '\n', '\\\\n')
+            command = "/bin/echo -e %s |" + local_settings.SSH_KEYGEN_COMMAND \
+                + " -y -f /dev/stdin"
+            LOGGER.debug(command % private_key)
             process = Popen(command % private_key, stdout=PIPE, shell=True)
             output = process.communicate()[0]
-            logger.debug(output)
+            LOGGER.debug(output)
             public_key = output
 
     result = None
@@ -133,10 +139,9 @@ def main():
         keypair = keypair['keypair']
     keypair_string = json.dumps(keypair)
 
-    logger.debug("the keypair string is : %s", keypair_string)
+    LOGGER.debug("the keypair string is : %s", keypair_string)
 
     print keypair_string
 
 if __name__ == "__main__":
     main()
-
