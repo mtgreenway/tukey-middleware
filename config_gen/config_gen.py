@@ -486,7 +486,7 @@ def main():
 
     all_statement = "".join(['''[commands]
 middledir=''', middleware_dir, '''
-venv=%(middleware_dir)s/tools/with_venv.sh
+venv=%(middledir)s/tools/with_venv.sh
 script_file=%(middledir)s/auth_proxy/multiple_keys.py
 script=%(venv)s python %(script_file)s ${auth-project-id} ${auth-token} '${name}' $( ''', all_statement[:-3], ''')
 
