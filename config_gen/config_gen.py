@@ -445,7 +445,7 @@ driver: EucalyptusAuth
 
 def main():
     #for cloud in settings.clouds
-    if not check_config(settings.clouds):
+    if not check_config(settings):
         print "Invalid configuration file"
         exit(1)
     print "Config file correct!"
