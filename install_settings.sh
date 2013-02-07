@@ -8,6 +8,7 @@ declare -A WSGI_DIRS=( ["auth"]="auth_proxy" ["nova"]="tukey_cli" ["glance"]="tu
 
 PROXY_HOST="localhost"
 
+CREATE_NEW_INTERFACE=false
 CLONE_MIDDLEWARE=true
 
 TEMP_DIR=tukey-middleware
