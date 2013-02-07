@@ -301,11 +301,11 @@ image: {
     "links" [
     {
         "rel" "self",
-        "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/v1.1/${username}/images/$(extra/imageId)"
+        "href" "http://''', self.proxy_host, ''':''', str(self.nova_proxy_port), '''/v1.1/${username}/images/$(extra/imageId)"
     },
     {
         "rel" "bookmark",
-        "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/${username}/images/$(extra/imageId)"
+        "href" "http://''', self.proxy_host, ''':''', str(self.nova_proxy_port), '''/${username}/images/$(extra/imageId)"
     }
     ]
     }
@@ -314,11 +314,11 @@ flavor: {
     "links" [
     {
         "rel" "self",
-        "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/v1.1/${username}/flavors/$(extra/instancetype)"
+        "href" "http://''', self.proxy_host, ''':''', str(self.nova_proxy_port), '''/v1.1/${username}/flavors/$(extra/instancetype)"
     },
     {
         "rel" "bookmark",
-        "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/${username}/flavors/$(extra/instancetype)"
+        "href" "http://''', self.proxy_host, ''':''', str(self.nova_proxy_port), '''/${username}/flavors/$(extra/instancetype)"
     }
     ]
     }
@@ -334,11 +334,11 @@ metadata: {}
 links: [
     {
     "rel" "self",
-    "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/v1.1/${username}/servers/$(id)"
+    "href" "http://''', self.proxy_host, ''':''', str(self.nova_proxy_port), '''/v1.1/${username}/servers/$(id)"
     },
     {
     "rel" "bookmark",
-    "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/${username}/servers/$(id)"
+    "href" "http://''', self.proxy_host, ''':''', str(self.nova_proxy_port), '''/${username}/servers/$(id)"
     }
     ]
 
@@ -361,11 +361,11 @@ image: {
     "links" [
         {
             "rel" "self",
-            "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/v1.1/${username}/images/$(extra/imageId)"
+            "href" "http://''', self.proxy_host, ''':''', str(self.nova_proxy_port), '''/v1.1/${username}/images/$(extra/imageId)"
         },
         {
             "rel" "bookmark",
-            "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/${username}/images/$(extra/imageId)"
+            "href" "http://''', self.proxy_host, ''':''', str(self.nova_proxy_port), '''/${username}/images/$(extra/imageId)"
         }
     ]
     }
@@ -375,11 +375,11 @@ flavor: {
     "links" [
         {
             "rel" "self",
-            "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/v1.1/${username}/flavors/$(extra/instancetype)"
+            "href" "http://''', self.proxy_host, ''':''', str(self.nova_proxy_port), '''/v1.1/${username}/flavors/$(extra/instancetype)"
         },
         {
             "rel" "bookmark",
-            "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/${username}/flavors/$(extra/instancetype)"
+            "href" "http://''', self.proxy_host, ''':''', str(self.nova_proxy_port), '''/${username}/flavors/$(extra/instancetype)"
         }
     ]
     }
@@ -397,11 +397,11 @@ metadata: {}
 links: [
     {
         "rel" "self",
-        "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/v1.1/${username}/servers/$(id)"
+        "href" "http://''', self.proxy_host, ''':''', str(self.nova_proxy_port), '''/v1.1/${username}/servers/$(id)"
     },
     {
         "rel" "bookmark",
-        "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/${username}/servers/$(id)"
+        "href" "http://''', self.proxy_host, ''':''', str(self.nova_proxy_port), '''/${username}/servers/$(id)"
     }
     ]
 
