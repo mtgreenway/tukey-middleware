@@ -318,6 +318,7 @@ class TukeyCli(object):
         for (site, cmd) in commands.items():
             try:
                 result = ''
+                stderr = ''
                 
                 config = self.configs[site]
                 sections = config.sections()

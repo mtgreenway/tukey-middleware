@@ -132,9 +132,11 @@ class OpenStackApiProxy(object):
             self.logger.debug("The command is %s", command)
             self.logger.debug(global_values)
 
+            return_headers = {"headers": []}            
+
             result = cli.execute_commands(command, values, object_name=name,
                 single=is_single, 
-                proxy_method=self.openstack_proxy(req, path))
+                proxy_method=self.openstack_proxy(req, path, return_headers))
 
             logger.debug(result)
 
@@ -159,6 +161,9 @@ class OpenStackApiProxy(object):
 
             resp.headers.add('Content-Type','application/json')
 
+            if req.method == "HEAD":
+                for header, value in return_headers["headers"]:
+                    resp.headers.add(header, value)
 
         except exc.HTTPException, e:
             resp = e
@@ -255,10 +260,10 @@ class OpenStackApiProxy(object):
             return command_segments[0][:-1], True
 
     
-    def openstack_proxy(self, req, path):
-        return lambda host: str(self.proxy_request(host, req, path))
+    def openstack_proxy(self, req, path, return_headers):
+        return lambda host: str(self.proxy_request(host, req, path, return_headers))
 
-    def proxy_request(self, host, req, path):
+    def proxy_request(self, host, req, path, return_headers):
         conn = httplib.HTTPConnection(host, self.port, False)
         if req.method != "POST" and 'Content-Length' in req.headers:
             del(req.headers['Content-Length'])
@@ -268,12 +273,16 @@ class OpenStackApiProxy(object):
             res_list = '[]'
         else:
             res_body = response.read()
-            res_obj = json.loads(str(res_body))
-            stripped_res = res_obj[res_obj.keys()[0]]
-            if type(stripped_res) is not list:
-                stripped_res = [stripped_res]
-            res_list = json.dumps(stripped_res)
+            try:
+                res_obj = json.loads(str(res_body))
+                stripped_res = res_obj[res_obj.keys()[0]]
+                if type(stripped_res) is not list:
+                    stripped_res = [stripped_res]
+                res_list = json.dumps(stripped_res)
+            except ValueError:
+                res_list = res_body
         conn.close()
+        return_headers["headers"] = response.getheaders()
         return res_list
 
 
