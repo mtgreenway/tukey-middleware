@@ -88,4 +88,4 @@ echo "Please edit auth_proxy/iptables.py to have proper settings then RUN!!!"
 if $CREATE_NEW_INTERFACE
 then
     /sbin/ip addr add $PROXY_HOST dev lo
-if
+fi
