@@ -22,7 +22,7 @@ import os
 import sys
 
 from ConfigParser import ConfigParser
-from auth_system import OpenStackAuth, EucalyptusAuth, TestAuth
+from auth_system import OpenStackAuth, EucalyptusAuth#, TestAuth
 from glob import glob
 from os import path, sep
 from webob import Request, Response

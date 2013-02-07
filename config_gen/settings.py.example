@@ -2,10 +2,10 @@
 # used by config_gen.py
 
 # Optional
-host_and_ports = {
-	"host": "127.0.0.2",
-	"nova_port": 8874
-}
+#host_and_ports = {
+#	"host": "127.0.0.2",
+#	"nova_port": 8874
+#}
 
 clouds = [
     {

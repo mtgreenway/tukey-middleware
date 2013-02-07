@@ -214,7 +214,8 @@ basedir=%(middleware_dir)s''' % {"middleware_dir": self.middleware_dir,
             "cloud_id": self.cloud["cloud_id"],
             "cloud_name": self.cloud["cloud_name"]}
 
-        config = "\n".join([config, '''command_base=%(basedir)s/tukey_cli/
+        config = "".join([config, '''
+command_base=%(basedir)s/tukey_cli/
 venv=%(basedir)s/tools/with_venv.sh
 compute=%(venv)s python %(command_base)stools/eucalyptus/compute.py
 
