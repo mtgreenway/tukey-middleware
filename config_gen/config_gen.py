@@ -97,7 +97,7 @@ fingerprint='%(gpg_fingerprint)s'
 passphrase='%(gpg_passphrase)s'
 host=%(login_host)s:%(login_port)s
 resource=%(cloud_id)s
-username=${%(cloud_id)s/username}
+username=${%(cloud_id)s''', self.username(), '''}
 keyname=%(cloud_id)s.pub''']) % {"cloud_id": self.cloud["cloud_id"],
             "cloud_name": self.cloud["cloud_name"],
             "middleware_dir": self.middleware_dir,
@@ -485,7 +485,7 @@ def main():
         count += 1
 
     all_statement = "".join(['''[commands]
-middledir=%(middleware_dir)s
+middledir=''', middleware_dir, '''
 venv=%(middleware_dir)s/tools/with_venv.sh
 script_file=%(middledir)s/auth_proxy/multiple_keys.py
 script=%(venv)s python %(script_file)s ${auth-project-id} ${auth-token} '${name}' $( ''', all_statement[:-3], ''')
