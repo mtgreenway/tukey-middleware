@@ -57,7 +57,7 @@ NameVirtualHost $PROXY_HOST:${PORTS[$site_name]}
 
 WSGIScriptAlias / $MIDDLEWARE_DIR/${WSGI_DIRS[$site_name]}/${site_name}_wsgi.py
 
-WSGIDaemonProcess tukey-$site_name user=$TUKEY_USER group=$TUKEY_GROUP processes=3 threads=1 python-path=$MIDDLEWARE_DIR/local:$MIDDLEWARE_DIR/${WSGI_DIR[$site_name]}:$MIDDLEWARE_DIR/.venv/lib/python2.7/site-packages:$MIDDLEWARE_DIR/.venv/local/lib/python2.7/site-packages
+WSGIDaemonProcess tukey-$site_name user=$TUKEY_USER group=$TUKEY_GROUP processes=3 threads=1 python-path=$MIDDLEWARE_DIR/local:$MIDDLEWARE_DIR/${WSGI_DIRS[$site_name]}:$MIDDLEWARE_DIR/.venv/lib/python2.7/site-packages:$MIDDLEWARE_DIR/.venv/local/lib/python2.7/site-packages
 
 WSGIProcessGroup tukey-$site_name
 
