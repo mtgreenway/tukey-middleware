@@ -301,11 +301,11 @@ image: {
     "links" [
     {
         "rel" "self",
-        "href" "http://%(proxy_host)s:%(nova_proxy_port)s/v1.1/${username}/images/$(extra/imageId)"
+        "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/v1.1/${username}/images/$(extra/imageId)"
     },
     {
         "rel" "bookmark",
-        "href" "http://%(proxy_host)s:%(nova_proxy_port)s/${username}/images/$(extra/imageId)"
+        "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/${username}/images/$(extra/imageId)"
     }
     ]
     }
@@ -314,11 +314,11 @@ flavor: {
     "links" [
     {
         "rel" "self",
-        "href" "http://%(proxy_host)s:%(nova_proxy_port)s/v1.1/${username}/flavors/$(extra/instancetype)"
+        "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/v1.1/${username}/flavors/$(extra/instancetype)"
     },
     {
         "rel" "bookmark",
-        "href" "http://%(proxy_host)s:%(nova_proxy_port)s/${username}/flavors/$(extra/instancetype)"
+        "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/${username}/flavors/$(extra/instancetype)"
     }
     ]
     }
@@ -334,11 +334,11 @@ metadata: {}
 links: [
     {
     "rel" "self",
-    "href" "http://%(proxy_host)s:%(nova_proxy_port)s/v1.1/${username}/servers/$(id)"
+    "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/v1.1/${username}/servers/$(id)"
     },
     {
     "rel" "bookmark",
-    "href" "http://%(proxy_host)s:%(nova_proxy_port)s/${username}/servers/$(id)"
+    "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/${username}/servers/$(id)"
     }
     ]
 
@@ -361,11 +361,11 @@ image: {
     "links" [
         {
             "rel" "self",
-            "href" "http://%(proxy_host)s:%(nova_proxy_port)s/v1.1/${username}/images/$(extra/imageId)"
+            "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/v1.1/${username}/images/$(extra/imageId)"
         },
         {
             "rel" "bookmark",
-            "href" "http://%(proxy_host)s:%(nova_proxy_port)s/${username}/images/$(extra/imageId)"
+            "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/${username}/images/$(extra/imageId)"
         }
     ]
     }
@@ -375,11 +375,11 @@ flavor: {
     "links" [
         {
             "rel" "self",
-            "href" "http://%(proxy_host)s:%(nova_proxy_port)s/v1.1/${username}/flavors/$(extra/instancetype)"
+            "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/v1.1/${username}/flavors/$(extra/instancetype)"
         },
         {
             "rel" "bookmark",
-            "href" "http://%(proxy_host)s:%(nova_proxy_port)s/${username}/flavors/$(extra/instancetype)"
+            "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/${username}/flavors/$(extra/instancetype)"
         }
     ]
     }
@@ -397,11 +397,11 @@ metadata: {}
 links: [
     {
         "rel" "self",
-        "href" "http://%(proxy_host)s:%(nova_proxy_port)s/v1.1/${username}/servers/$(id)"
+        "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/v1.1/${username}/servers/$(id)"
     },
     {
         "rel" "bookmark",
-        "href" "http://%(proxy_host)s:%(nova_proxy_port)s/${username}/servers/$(id)"
+        "href" "http://''', self.proxy_host, ''':''', self.nova_proxy_port, '''/${username}/servers/$(id)"
     }
     ]
 
@@ -420,10 +420,10 @@ metadata: {}
 links:  [
                 {
                     "rel" "self",
-                    "href" "http://%(proxy_host)s/v1.1/${username}/images/${id}"                },
+                    "href" "http://''', self.proxy_host, '''/v1.1/${username}/images/${id}"                },
                 {
                     "rel" "bookmark",
-                    "href" "http://%(proxy_host)s/${username}/images/${id}"}
+                    "href" "http://''', self.proxy_host, '''/${username}/images/${id}"}
             ]
 
 [transformations:os-keypairs]
@@ -439,7 +439,7 @@ launchVm:   result
 
 [auth]
 driver: EucalyptusAuth
-''']) % {"proxy_host": self.proxy_host, "nova_proxy_port": self.nova_proxy_port}
+''']) 
         return config
 
 
