@@ -55,7 +55,7 @@ NameVirtualHost $PROXY_HOST:${PORTS[$site_name]}
 
 <Virtualhost $PROXY_HOST:${PORTS[$site_name]}>
 
-WSGIScriptAlias / $MIDDLEWARE_DIR/${WSGI_DIR[$site_name]}/${site_name}_wsgi.py
+WSGIScriptAlias / $MIDDLEWARE_DIR/${WSGI_DIRS[$site_name]}/${site_name}_wsgi.py
 
 WSGIDaemonProcess tukey-$site_name user=$TUKEY_USER group=$TUKEY_GROUP processes=3 threads=1 python-path=$MIDDLEWARE_DIR/local:$MIDDLEWARE_DIR/${WSGI_DIR[$site_name]}:$MIDDLEWARE_DIR/.venv/lib/python2.7/site-packages:$MIDDLEWARE_DIR/.venv/local/lib/python2.7/site-packages
 
@@ -64,7 +64,7 @@ WSGIProcessGroup tukey-$site_name
 ErrorLog /var/log/apache2/tukey-${site_name}-error.log
 CustomLog /var/log/apache2/tukey-${site_name}-access.log combined
 
-<Directory $MIDDLEWARE_DIR/${WSGI_DIR[$site_name]}>
+<Directory $MIDDLEWARE_DIR/${WSGI_DIRS[$site_name]}>
   Order allow,deny
   Allow from all
 </Directory>
