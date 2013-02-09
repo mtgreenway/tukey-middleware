@@ -31,31 +31,14 @@ def time_to_unix(time_str):
 
     return int(time.mktime(time.strptime(time_str, format_str)))
 
+        
+def get_usage_batch(start, stop, username):
+    ''' Get all of the users usage attributes at once using a single 
+    powerful query.  One query to rule them all'''
 
-def get_usage_attribute(start, stop, resource, username, attr, name,
-    hours=False):
-
-    usage_hours = "select sum(val) / 60 as %(name)s "
-
-    usage_mean = "select sum(val) / count(val) as %(name)s "
-
-    usage_template = """
-        from log
-        where ts < %(stop)s and ts > %(start)s
-        and res='%(resource)s'
-        and fea='%(username)s-%(attr)s';
-    """
-
-    if hours:
-        usage_template = usage_hours + usage_template
-    else:
-        usage_template = usage_mean + usage_template
-
-    usage_query = usage_template % locals()
-
-    LOGGER.debug(usage_query)
-
-    return usage_query
+    return ''.join(["""select res, fea, sum(val), count(val)
+        from log where ts < %(stop)s and ts > %(start)s
+        and fea like '%(username)s-""" % locals(), "%' group by res, fea;"])
 
 
 def get_usages(resources, attributes):
@@ -108,13 +91,30 @@ def main():
 
     results = {}
 
+    # run the master query and then query that for what we would like
+    cur.execute(get_usage_batch(_start_unix, _stop_unix, tenant_id))
+    batch_results = cur.fetchall()
+
+    # possibly make this into a dict comprehension
+    formatted = {}
+    for result in batch_results:
+        attr = result[1].split('-')[1]
+
+        if result[0] not in formatted:
+            formatted[result[0]] = {}
+
+        if attr in local_settings.USAGE_HOURS:
+            formatted[result[0]][attr] = result[2] / 60
+        else:
+            formatted[result[0]][attr] = result[2] / result[3]
+
     for resource, attr, name in usages:
         result_key = name + '_' + attr
-        query = get_usage_attribute(_start_unix,
-            _stop_unix, resource, tenant_id, attr, result_key,
-            attr in local_settings.USAGE_HOURS)
-        cur.execute(query)
-        results[result_key] = cur.fetchone()[0]
+        try:
+            results[result_key] = formatted[resource][attr]
+        except KeyError:
+            results[result_key] = None
+
 
     results = {key: result if key.endswith("du") or result is None else float(
         result) for key, result in results.items()}

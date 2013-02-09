@@ -83,6 +83,10 @@ python $MIDDLEWARE_DIR/config_gen/config_gen.py $MIDDLEWARE_DIR
 
 ln -s $PGP_KEYDIR $MIDDLEWARE_DIR/tukey_cli/etc/keys
 
+# Fix stupid bug with virtual env and M2Crypto
+rm $MIDDLEWARE_DIR/.venv/lib/python2.7/site-packages/M2Crypto/__m2crypto.so
+ln -s /usr/lib/python2.7/dist-packages/M2Crypto/__m2crypto.so $MIDDLEWARE_DIR/.venv/lib/python2.7/site-packages/M2Crypto/__m2crypto.so
+
 echo "Please edit auth_proxy/iptables.py to have proper settings then RUN!!!"
 
 if $CREATE_NEW_INTERFACE
