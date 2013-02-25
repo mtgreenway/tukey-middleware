@@ -13,13 +13,15 @@ CLONE_MIDDLEWARE=true
 
 TEMP_DIR=tukey-middleware
 
-INSTALL_PRE=true
+#INSTALL_PRE=true
+INSTALL_PRE=false
 
-LOCAL_SETTINGS_FILE=/home/ubuntu/local_settings.py
-CONFIG_GEN_SETTINGS_FILE=/home/ubuntu/settings.py
-PGP_KEY_DIR=/home/ubuntu/keys
+CONFIG_BASE_DIR=/var/www/tukey/config/middleware
+LOCAL_SETTINGS_FILE=$CONFIG_BASE_DIR/local_settings.py
+CONFIG_GEN_SETTINGS_FILE=$CONFIG_BASE_DIR/settings.py
+PGP_KEY_DIR=$CONFIG_BASE_DIR/keys
 
-MIDDLEWARE_REPO=ssh://git@source.bionimbus.org/home/git/tukey-middleware.git
+MIDDLEWARE_REPO=http://git.bionimbus.org/git/tukey/tukey-middleware.git
 TEMP_DIR=tukey-middleware
 
 # make this be an absolute url

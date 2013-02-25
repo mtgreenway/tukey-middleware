@@ -1,4 +1,4 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
+
 
 # Adapted from installation script for the OpenStack Dashboard development
 # virtualenv.
@@ -203,12 +203,15 @@ def main():
 
     parser.add_option("--no-logdir", dest="logdir", action="store_false")
 
+    parser.add_option("--no-pip", dest="pip", action="store_false")
+
     (options, _) = parser.parse_args()
 
-    check_dependencies()
-    create_virtualenv()
-    install_dependencies()
-    
+    if options.pip():
+        check_dependencies()
+        create_virtualenv()
+        install_dependencies()
+        
     # pretty sure this is not needed
     #install_tukey()
     if options.database:
