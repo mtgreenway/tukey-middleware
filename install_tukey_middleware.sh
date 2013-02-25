@@ -28,7 +28,7 @@ if $CLONE_MIDDLEWARE;
 then
 	git clone $MIDDLEWARE_REPO $TEMP_DIR
 	sudo cp -r $TEMP_DIR $MIDDLEWARE_DIR
-	sudo chown -R $TUKEY_USER:$TUKEY_GROUP $MIDDLEWARE_DIR
+	sudo chown -R $USER $MIDDLEWARE_DIR
 	cd $MIDDLEWARE_DIR
 fi
 
@@ -93,3 +93,6 @@ if $CREATE_NEW_INTERFACE
 then
     /sbin/ip addr add $PROXY_HOST dev lo
 fi
+
+sudo chown -R $TUKEY_USER:$TUKEY_GROUP $MIDDLEWARE_DIR
+
