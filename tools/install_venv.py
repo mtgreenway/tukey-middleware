@@ -207,7 +207,7 @@ def main():
 
     (options, _) = parser.parse_args()
 
-    if options.pip():
+    if options.pip:
         check_dependencies()
         create_virtualenv()
         install_dependencies()
