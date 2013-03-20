@@ -19,17 +19,14 @@ For info go to:
 
  * http://opensciencedatacloud.org
 
-Dependencies
-============
-
-For Ubuntu use apt to install::
-
-    $ sudo apt-get install python-virtualenv postgresql-9.1 postgresql-server-dev-9.1 swig build-essential memcached
-    $ sudo apt-get python-psycopg2
-    
+   
 
 Getting Started
 ===============
+
+You can install tukey middleware by running install_tukey_middleware.sh
+
+Before running install_tukey_middleware.sh read and edit install_settings.sh
 
 Before installing you will need to copy local/local_settings.py.example
 to local/local_settings.py and put in the values for your cloud.
@@ -66,7 +63,14 @@ Run the start up scripts for each service::
   $ ./nova.sh
   $ ./glance.sh
 
+Dependencies
+============
 
+For Ubuntu use apt to install::
+
+    $ sudo apt-get install python-virtualenv postgresql-9.1 postgresql-server-dev-9.1 swig build-essential memcached
+    $ sudo apt-get python-psycopg2
+ 
 SSH Key Creation Service
 ========================
 
