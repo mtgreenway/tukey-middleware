@@ -1,0 +1,10 @@
+#!/bin/bash
+
+TUKEY_HOME=/var/www/tukey
+TUKEY_KEY_DIR=$TUKEY_HOME/tukey-middleware/tukey_cli/etc/keys
+echo "export HOME=$TUKEY_HOME &&\
+    cd ~ &&\ 
+    gpg --gen-key &&\
+    gpg --armor --output tukey.pub --export"|sudo sudo -u tukey -s /bin/bash
+
+echo "for file in $TUKEY_HOME_DIR/*;do gpg --import $file;done"|sudo sudo -u tukey -s /bin/bash
