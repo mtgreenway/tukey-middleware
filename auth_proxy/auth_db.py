@@ -147,6 +147,7 @@ def delete_sshkey(cloud, username, keyname):
         delete from keypair using cloud, login
         where name='%(keyname)s' and keypair.userid=login.userid and 
         cloud.cloud_name='%(cloud)s' and cloud.cloud_id=login.cloud_id 
+        and keypair.cloud_id = cloud.cloud_id
         and login.username='%(username)s';
     """ % locals()
 
@@ -176,6 +177,7 @@ def get_keypairs(cloud, username):
     query = """
         select name, fingerprint, pubkey from keypair, login, cloud 
         where cloud_name='%(cloud)s' and cloud.cloud_id = keypair.cloud_id
+        and login.cloud_id = cloud.cloud_id
         and login.username='%(username)s' and login.userid=keypair.userid;
     """ % locals()
 
