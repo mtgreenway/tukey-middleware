@@ -17,7 +17,7 @@ def connect():
     db_name = 'federated_auth'
     db_username = 'cloudgui'
     db_password = local_settings.AUTH_DB_PASSWORD
-    host = 'localhost'
+    host = local_settings.AUTH_DB_HOST
 
     connection = None
 

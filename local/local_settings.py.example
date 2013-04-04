@@ -16,6 +16,7 @@
 
 # Password for the federated_auth database
 AUTH_DB_PASSWORD = ''
+AUTH_DB_HOST = 'localhost'
 
 # The user Tukey middleware will run as
 USER = 'ubuntu'
@@ -54,7 +55,7 @@ USAGE_ATTRIBUTES = {
 
 
 # used in auth_proxy to switch host to localhost for
-# endpoint request 
+# endpoint request
 PROXY_ENDPOINT_PORTS = [5000,8774,9292, 35357]
 
 # used in auth proxy to replace in values in the
