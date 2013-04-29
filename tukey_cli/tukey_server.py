@@ -31,7 +31,7 @@ import local_settings
 
 class OpenStackApiProxy(object):
     '''Proxy between OpenStack clients, in particular Horizon
-    and multiple clouds with multiple APIs''' 
+    and multiple clouds with multiple APIs'''
 
 
     def __init__(self, port, memcache_host, memcache_port, logger):
@@ -39,8 +39,8 @@ class OpenStackApiProxy(object):
         self.port = port
 
         self.logger = logger
-        
-        # connect to memcached to get authentication 
+
+        # connect to memcached to get authentication
         # details that cannot be sent through the lowly
         # auth token
         memcache_string = '%s:%s' % (memcache_host, memcache_port)
@@ -50,7 +50,7 @@ class OpenStackApiProxy(object):
     def __call__(self, environ, start_response):
         req = Request(environ)
         try:
-            
+
             # TODO: should probably pass this in from
             # the outside
             conf_dir = local_settings.CONF_DIR
@@ -63,7 +63,7 @@ class OpenStackApiProxy(object):
             values = self.mc.get(auth_token)
 
             #self.logger.debug(values)
-            
+
             command = self.__path_to_command(req.path)
             global_values = self.__path_to_params(req.path)
 
@@ -73,7 +73,7 @@ class OpenStackApiProxy(object):
             global_values[TukeyCli.GLOBAL_SECTION]['auth-token'] = auth_token
             if 'x-auth-project-id' in req.headers:
                 global_values[TukeyCli.GLOBAL_SECTION]['auth-project-id'] = req.headers['x-auth-project-id']
-        
+
 
             global_values[TukeyCli.GLOBAL_SECTION].update(req.params)
 
@@ -88,7 +88,7 @@ class OpenStackApiProxy(object):
                 is_single = True
                 if not name in post_exception_names:
                     name = name[:-1]
-                
+
                 body_values = json.loads(req.body)
                 if name in body_values:
                     body_values = json.loads(req.body)[name]
@@ -96,13 +96,13 @@ class OpenStackApiProxy(object):
                     cloud = split_id[0]
                     new_object_name = split_id[-1]
                     body_values['name'] = new_object_name
-    
+
                     #self.logger.debug(body_values)
-                    
+
                     req.body = json.dumps({name: body_values})
-                    
+
                     global_values[TukeyCli.GLOBAL_SECTION].update(body_values)
-                    
+
                     cli.load_config_dir(conf_dir + cloud)
                 else:
                     cli.load_config_dir(conf_dir)
@@ -132,20 +132,28 @@ class OpenStackApiProxy(object):
             self.logger.debug("The command is %s", command)
             self.logger.debug(global_values)
 
-            return_headers = {"headers": []}            
+            return_headers = {"headers": []}
+
+
+            if "master_tenantId" in global_values[TukeyCli.GLOBAL_SECTION]:
+                default_tenant = global_values[TukeyCli.GLOBAL_SECTION]["master_tenantId"]
+            elif "project_id" in global_values[TukeyCli.GLOBAL_SECTION]:
+                default_tenant = global_values[TukeyCli.GLOBAL_SECTION]["project_id"]
+            else:
+                default_tenant = None
 
             result = cli.execute_commands(command, values, object_name=name,
-                single=is_single, 
-                proxy_method=self.openstack_proxy(req, path, return_headers))
+                single=is_single,
+                proxy_method=self.openstack_proxy(req, path, return_headers, default_tenant))
 
             logger.debug(result)
 
             result = self.remove_error(name, result)
-            
+
             result = self.apply_os_exceptions(command, result)
 
             logger.debug(result)
-            
+
             resp = Response(result)
 
             result_object = json.loads(result)
@@ -173,7 +181,7 @@ class OpenStackApiProxy(object):
     def apply_os_exceptions(self, command, result):
         if command == 'os-quota-sets':
             res_obj = json.loads(result)
-            #res_obj['quota_set'] = {quota_set['cloud']: quota_set for 
+            #res_obj['quota_set'] = {quota_set['cloud']: quota_set for
             #                    quota_set in res_obj['quota_set']}
             res_obj['quota_set'] = {quota_set['cloud']:
                 {key: value for key, value in quota_set.items()
@@ -188,7 +196,7 @@ class OpenStackApiProxy(object):
             else:
                 res_obj['tenant_usage'] = {}
                 return json.dumps(res_obj)
-            
+
         return result
 
 
@@ -198,7 +206,7 @@ class OpenStackApiProxy(object):
             new_res = [item for item in res_obj if not ('error'in item)]
             return json.dumps({name: new_res})
         return result
-        
+
 
     def __parse_path(self, full_path):
 
@@ -229,7 +237,7 @@ class OpenStackApiProxy(object):
 
 
     def __path_to_params(self, full_path):
-        
+
         path_segments, index = self.__parse_path(full_path)
 
         global_values =  {TukeyCli.GLOBAL_SECTION:{}}
@@ -252,22 +260,33 @@ class OpenStackApiProxy(object):
                 return command_segments[0][3:].replace('-','_'), False
             else:
                 return command_segments[0][3:-1].replace('-','_'), False
-        
+
 
         if len(command_segments) > 1  and command_segments[1] in OpenStackApiProxy.after_command:
             return command_segments[0], False
         else:
             return command_segments[0][:-1], True
 
-    
-    def openstack_proxy(self, req, path, return_headers):
-        return lambda host: str(self.proxy_request(host, req, path, return_headers))
 
-    def proxy_request(self, host, req, path, return_headers):
+    def openstack_proxy(self, req, path, return_headers, default_tenant):
+        return lambda host, token_id, tenant_id: str(self.proxy_request(host,
+            token_id, tenant_id, req, path, return_headers, default_tenant))
+
+    def proxy_request(self, host, token_id, tenant_id, req, path, return_headers, default_tenant):
         conn = httplib.HTTPConnection(host, self.port, False)
-        if req.method != "POST" and 'Content-Length' in req.headers:
-            del(req.headers['Content-Length'])
-        conn.request(req.method, path, req.body, req.headers)
+        # EnvironHeaders has no copy method
+        headers = {key: value for key, value in req.headers.items()}
+        if req.method != "POST" and 'Content-Length' in headers:
+            del(headers['Content-Length'])
+        # Capitlizatoin matters in dict
+        headers["X-Auth-Token"] = token_id
+        headers["X-Auth-Project-Id"] = tenant_id
+        print "auth token", headers["X-Auth-Token"]
+        print "before path", path
+        if default_tenant is not None:
+            path = path.replace(default_tenant, tenant_id)
+            print "after path", path
+        conn.request(req.method, path, req.body, headers)
         response = conn.getresponse()
         if response.status == 404:
             res_list = '[]'
@@ -315,7 +334,7 @@ if __name__ == '__main__':
     options, args = parser.parse_args()
 
 
-        #logging settings 
+        #logging settings
     logger = logging.getLogger('tukey-api')
 
     if options.debug:
@@ -356,3 +375,4 @@ else:
     logger.setLevel(logging.DEBUG)
 
     application = OpenStackApiProxy(8774, '127.0.0.1', 11211, logger)
+
