@@ -32,6 +32,13 @@ from glob import glob
 from subprocess import call, Popen, PIPE
 from ConfigParser import ConfigParser
 
+import os 
+import sys
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../local')
+import local_settings
+
+
 class TukeyCli(object):
     '''
     classdocs
@@ -253,21 +260,23 @@ class TukeyCli(object):
 
         return self.replace_var(json_string, values)
 
+
     def tag(self, json_string, site):
         '''
             json_string is the result of command for a particular site
             add the tag attribute to each entry as specified in the conf
         '''
-        config = self.configs[site]
-
-        tag_section = TukeyCli.__TAG_SECTION
-
-        if tag_section not in config.sections():
+        if site == "all":
             return json_string
 
-        for option in config.options(tag_section):
-            # Check if it is singular or not
-            json_string = self.trans.add_attr(json_string, option, config.get(tag_section,option))
+        if site.startswith("login"):
+            name = local_settings.clouds[site[5:]]["name"] + " Login Node"
+        else:
+            name = local_settings.clouds[site]["name"]
+
+        json_string = self.trans.add_attr(json_string, "cloud", name)
+        json_string = self.trans.add_attr(json_string, "cloud_name", name)
+        json_string = self.trans.add_attr(json_string, "cloud_id", site)
 
         return json_string
 
