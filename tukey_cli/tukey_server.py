@@ -94,6 +94,7 @@ class OpenStackApiProxy(object):
                     body_values = json.loads(req.body)[name]
                     split_id = body_values['name'].split('-',1)
                     cloud = split_id[0]
+                    self.logger.debug(cloud)
                     new_object_name = split_id[-1]
                     body_values['name'] = new_object_name
 
@@ -146,7 +147,7 @@ class OpenStackApiProxy(object):
                 single=is_single,
                 proxy_method=self.openstack_proxy(req, path, return_headers, default_tenant))
 
-            logger.debug(result)
+            #logger.debug(result)
 
             result = self.remove_error(name, result)
 

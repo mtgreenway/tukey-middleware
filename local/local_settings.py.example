@@ -10,6 +10,7 @@ USER = 'ubuntu'
 # directory with api mapping files
 # we should be able to remove this
 CONF_DIR = '/var/www/tukey/tukey-middleware/tukey_cli/etc/enabled/'
+KEY_DIR = '/var/www/tukey/tukey-middleware/tukey_cli/etc/keys/'
 # Directory to write logs to
 import logging
 LOG_LEVEL = logging.INFO
@@ -48,11 +49,11 @@ clouds = [{
     "id": "adler",
     "type": "eucalyptus",
     "login_node": {
-        "gpg_fingerprint": 'FC9B3EC071DE820529E974BDF28152B028BC3A6D',
-        "gpg_passphrase": '',
         "gpg_pubkey": 'adler.pub',
+        "passphrase": "",
         "host": "10.103.112.1",
-        "port": 5005
+        "sshkey_port": 5005
+        "cluster_port": 6006
     },
 	"usage_cloud": True
     },
@@ -65,11 +66,11 @@ clouds = [{
     "keystone_host": "10.103.114.3",
     "keystone_port": 5000,
     "login_node": {
-        "gpg_fingerprint": 'FC9B3EC071DE820529E974BDF28152B028BC3A6D',
-        "gpg_passphrase": '',
         "gpg_pubkey": 'sullivan.pub',
+        "passphrase": "",
         "host": "10.103.114.1",
-        "port": 5005
+        "sshkey_port": 5005
+        "cluster_port": 6006
         },
 	"usage_cloud": False
     },
@@ -81,11 +82,11 @@ clouds = [{
     "keystone_host": 10.103.105.2,
     "keystone_port": 5000,
     "login_node": {
-        "gpg_fingerprint": 'FC9B3EC071DE820529E974BDF28152B028BC3A6D',
-        "gpg_passphrase": '',
         "gpg_pubkey": 'sullivan.pub',
+        "passphrase": "",
         "host": "10.103.105.1",
-        "port": 5005
+        "sshkey_port": 5005
+        "cluster_port": 6006
     }
 ]
 
@@ -110,12 +111,19 @@ NOVA_PROXY_PORT = 8774
 # at OpenStack cloud install time
 MEMBER_ROLE_ID = "7cc444dd12f4413c90f1f19e3c109f99"
 
+GPG_HOME = '/var/www/tukey/.gnupg'
+GPG_FINGERPRINT = 'FC9B3EC071DE820529E974BDF28152B028BC3A6D'
+GPG_PASSPHRASE = ''
+
+# for the ssh key generation service
+ERVER_PASSPHRASE = ''
+SERVER_GPG_PASSPHRASE = ''
+SERVER_GPG_HOME = '/root/.gnupg'
+
 # for the ssh key generation service
 KEY_SERVER_HOME_DIR = '/home/'
-KEY_SERVER_GPG_HOME = '/root/.gnupg'
-KEY_SERVER_PASSPHRASE = ''
+# this is the gpg passphrase
 KEY_SERVER_KEY_FILE = '.ssh/authorized_keys'
 
 SSH_KEYGEN_COMMAND = '/usr/bin/ssh-keygen'
-
 

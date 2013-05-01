@@ -269,8 +269,10 @@ class TukeyCli(object):
         if site == "all":
             return json_string
 
-        if site.startswith("login"):
+        if site.startswith("login"): 
             name = local_settings.clouds[site[5:]]["name"] + " Login Node"
+        elif site.startswith("cluster"):
+            name = local_settings.clouds[site[7:]]["name"] + " Cluster Node"
         else:
             name = local_settings.clouds[site]["name"]
 

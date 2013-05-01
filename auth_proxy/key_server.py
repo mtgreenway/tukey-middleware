@@ -101,8 +101,8 @@ def delete():
 
 
 HOME_DIR = local_settings.KEY_SERVER_HOME_DIR
-GPG_HOME = local_settings.KEY_SERVER_GPG_HOME
-PASSPHRASE = local_settings.KEY_SERVER_PASSPHRASE
+GPG_HOME = local_settings.SERVER_GPG_HOME
+PASSPHRASE = local_settings.SERVER_GPG_PASSPHRASE
 KEY_FILE = local_settings.KEY_SERVER_KEY_FILE
 
 
