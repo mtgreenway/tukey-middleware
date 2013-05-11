@@ -3,6 +3,7 @@
 
 from flask import Flask, request, abort
 from logging_settings import get_logger
+from subprocess import call
 
 import gnupg
 import json
@@ -17,10 +18,13 @@ app = Flask(__name__)
 #logging settings 
 logger = get_logger()
 
-def start_cluster(username, image, flavor, number):
+def start_cluster(username, cluster_id, number):
     ''' Launch a cluster with number compute nodes from image with flavor for 
     username '''
     print locals() 
+    call(["/glusterfs/users/torque_nodes/headnode/start-cluster-tukey",
+        username, cluster_id, number]) 
+
 
 @app.route("/", methods=['POST'])
 def post():
