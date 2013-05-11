@@ -41,8 +41,8 @@ def post():
 
     logger.debug(cluster_info['username'])
 
-    start_cluster(cluster_info["username"], cluster_info["image"],
-        cluster_info["flavor"], cluster_info["number"])
+    start_cluster(cluster_info["username"], cluster_info["cluster_id"],
+        cluster_info["number"])
 
     return "done"
 
