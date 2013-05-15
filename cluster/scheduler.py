@@ -1,3 +1,4 @@
+import base64
 import datetime
 import gnupg
 import httplib
@@ -83,10 +84,23 @@ def node_launch_request(project_id, auth_token, node_object):
     return response
 
 
+def get_user_data(file_name, format_dict):
+    ''' Read file in same dir and format with the dict then b64 encode'''
+    script_file = open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+        file_name))
+    script = script_file.read() 
+    script_file.close()
+    script = script % format_dict
+    return base64.b64encode(script)
+
+
 def launch_instances(project_id, auth_token, cloud, image, flavor, number,
-    cluster_id):
+    cluster_id, username):
     ''' Launch a tiny headnode and number compute nodes with flavor and image
     '''
+    
+    head_node_user_data = get_user_data("torque-server.sh",
+        {"username": username, "cluster_id": cluster_id, "nodes": number})
 
     head_node = {
         "server":  {
@@ -95,6 +109,7 @@ def launch_instances(project_id, auth_token, cloud, image, flavor, number,
             "imageRef": image,
             "max_count": 1,
             "min_count": 1,
+            "user_data": head_node_user_data,
             "security_groups": [{"name": "default"}]
         }
     }
@@ -106,6 +121,9 @@ def launch_instances(project_id, auth_token, cloud, image, flavor, number,
     head_node_response = json.loads(response.text)
     node_ids = [head_node_response["server"]["id"]]
 
+    compute_node_user_data = get_user_data("torque-node.sh", 
+        {"username": username, "cluster_id": cluster_id})
+
     for i in range(int(number)):
 
         compute_node = {
@@ -115,6 +133,7 @@ def launch_instances(project_id, auth_token, cloud, image, flavor, number,
                 "imageRef": image,
                 "max_count": 1,
                 "min_count": 1,
+                "user_data": compute_node_user_data,
                 "security_groups": [{"name": "default"}]
             }
         }
@@ -147,7 +166,7 @@ def launch_cluster(project_id, auth_token, cloud, username, image, flavor,
     cluster_id = "%s_%s" % (rand_base[-8:], date.strftime("%m-%d-%y"))
 
     status = launch_instances(project_id, auth_token, cloud, image, flavor,
-        number, cluster_id)
+        number, cluster_id, username)
 
     logger.debug(status)
 
@@ -155,57 +174,6 @@ def launch_cluster(project_id, auth_token, cloud, username, image, flavor,
         print '{"message": "Not all nodes could be created.", "code": 409}'
         sys.exit(1)
  
-    host = local_settings.clouds[cloud]["login_node"]["host"]
-    port = local_settings.clouds[cloud]["login_node"]["cluster_port"]
-    keyfile_name = local_settings.KEY_DIR + local_settings.clouds[cloud][
-        "login_node"]["gpg_pubkey"]
-    password_to_send = local_settings.clouds[cloud]["login_node"]["passphrase"]
-
-    logger.debug(keyfile_name)
-    
-    keyfile = open(keyfile_name)
-    host_key = keyfile.read()
-    keyfile.close()
-    logger.debug("hey")
-
-    logger.debug(host_key)
-
-    gpg = gnupg.GPG(gnupghome=local_settings.GPG_HOME)
-
-    import_result = gpg.import_keys(host_key)
-
-    recipient = import_result.fingerprints[0]
-
-    raw_message = json.dumps(
-    {
-        "passphrase": password_to_send,
-        "username": username, 
-        "cluster_id": cluster_id,
-        #"image": image,
-        #"flavor": flavor,
-        "number": number
-    })
-
-    message = gpg.encrypt(raw_message, recipient, always_trust=True,
-        sign=local_settings.GPG_FINGERPRINT,
-        passphrase=local_settings.GPG_PASSPHRASE)
-
-    logger.debug("host: %s", host)
-    logger.debug("port: %s", port)
-    try:
-        conn = httplib.HTTPConnection("%s:%s" % (host, port))
-        conn.request("POST", '/', str(message))
-        resp = conn.getresponse()
-        conn.close()
-    except:
-        return '{"message": "Cluster launch failed.", "code": 409}'
-
-    if resp.status != 200:
-        return '{"message": "Cluster launch failed.", "code": %s}' % resp.status
-    content = resp.read()
-
-    logger.debug("content %s", content)
-
     return json.dumps({"servers": [ {"id": ""} for i in range(int(number)) ] })
 
     #return content
