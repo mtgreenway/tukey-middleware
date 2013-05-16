@@ -1,35 +1,22 @@
-# Copyright 2012 Open Cloud Consortium
-#
-#    Licensed under the Apache License, Version 2.0 (the "License"); you may
-#    not use this file except in compliance with the License. You may obtain
-#    a copy of the License at
-#
-#         http://www.apache.org/licenses/LICENSE-2.0
-#
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-#    License for the specific language governing permissions and limitations
-#    under the License.
-
-# Local settings file
+# Information about what clouds tukey should support
+# used by config_gen.py
 
 # Password for the federated_auth database
 AUTH_DB_PASSWORD = ''
+AUTH_DB_HOST = '10.103.114.3'
 
 # The user Tukey middleware will run as
 USER = 'ubuntu'
-
 # directory with api mapping files
-CONF_DIR = '/home/ubuntu/tukey-middleware-1/tukey_cli/etc/enabled/'
-
+# we should be able to remove this
+CONF_DIR = '/var/www/tukey/tukey-middleware/tukey_cli/etc/enabled/'
+KEY_DIR = '/var/www/tukey/tukey-middleware/tukey_cli/etc/keys/'
 # Directory to write logs to
 import logging
 LOG_LEVEL = logging.INFO
 #LOG_LEVEL = logging.DEBUG
 LOG_DIR = '/var/log/tukey/'
 LOG_FORMAT = '%(asctime)s %(levelname)s %(message)s %(filename)s:%(lineno)d'
-
 # If you have setup an external usage service
 USAGE_DB_PASSWORD = ''
 USAGE_DB_USERNAME = 'console_ro'
@@ -39,7 +26,8 @@ USAGE_DB_HOST = '10.103.112.1'
 USAGE_RESOURCES = {
     'cloud': {
         'adler': 'OSDC Cloud2',
-        'sullivan': 'OSDC-Sullivan'
+        'sullivan': 'OSDC-Sullivan',
+        'conte_pdc': 'conte-pdc'
     },
     'hadoop': {
         name.replace('-','_').lower(): name for name in [
@@ -52,6 +40,55 @@ USAGE_ATTRIBUTES = {
     'cloud': ['du', 'cores', 'ram']
 }
 
+# values that are calculated in hours
+USAGE_HOURS = ['jobs', 'cores', 'ram']
+
+
+clouds = [{
+    "name": "Adler",
+    "id": "adler",
+    "type": "eucalyptus",
+    "login_node": {
+        "gpg_pubkey": 'adler.pub',
+        "passphrase": "",
+        "host": "10.103.112.1",
+        "sshkey_port": 5005
+        "cluster_port": 6006
+    },
+	"usage_cloud": True
+    },
+    {
+    "name": "Sullivan",
+    "id": "sullivan",
+    "type": "openstack",
+    "nova_host": "10.103.114.3",
+    "nova_port": 8774,
+    "keystone_host": "10.103.114.3",
+    "keystone_port": 5000,
+    "login_node": {
+        "gpg_pubkey": 'sullivan.pub',
+        "passphrase": "",
+        "host": "10.103.114.1",
+        "sshkey_port": 5005
+        "cluster_port": 6006
+        },
+	"usage_cloud": False
+    },
+    {
+    "name": "PDC"
+    "id": "pdc",
+    "nova_host": "10.103.105.2",
+    "nova_port": 8774,
+    "keystone_host": 10.103.105.2,
+    "keystone_port": 5000,
+    "login_node": {
+        "gpg_pubkey": 'sullivan.pub',
+        "passphrase": "",
+        "host": "10.103.105.1",
+        "sshkey_port": 5005
+        "cluster_port": 6006
+    }
+]
 
 # used in auth_proxy to switch host to localhost for
 # endpoint request 
@@ -65,11 +102,6 @@ PROXY_REPLACE = {'volume': ''}
 
 AUTH_TOKEN_EXPIRATION = 24*60*60
 
-
-# Server running the default keystone if there is one
-KEYSTONE_HOST = '10.103.114.3'
-
-# The host API proxies will be running on
 API_HOST = '127.0.0.1'
 
 # The port of the nova api
@@ -79,10 +111,18 @@ NOVA_PROXY_PORT = 8774
 # at OpenStack cloud install time
 MEMBER_ROLE_ID = "7cc444dd12f4413c90f1f19e3c109f99"
 
+GPG_HOME = '/var/www/tukey/.gnupg'
+GPG_FINGERPRINT = 'FC9B3EC071DE820529E974BDF28152B028BC3A6D'
+GPG_PASSPHRASE = ''
+
+# for the ssh key generation service
+SERVER_PASSPHRASE = ''
+SERVER_GPG_PASSPHRASE = ''
+SERVER_GPG_HOME = '/root/.gnupg'
+
 # for the ssh key generation service
 KEY_SERVER_HOME_DIR = '/home/'
-KEY_SERVER_GPG_HOME = '/root/.gnupg'
-KEY_SERVER_PASSPHRASE = ''
+# this is the gpg passphrase
 KEY_SERVER_KEY_FILE = '.ssh/authorized_keys'
 
 SSH_KEYGEN_COMMAND = '/usr/bin/ssh-keygen'

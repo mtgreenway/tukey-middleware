@@ -59,7 +59,9 @@ class AuthProxy(object):
     other middle ware between Horizon and cloud services.
     '''
 
-    def __init__(self, keystone_host, keystone_port, memcache_host,
+    RESERVED_WORDS = ["host", "port", "fake_tenant", "fake_endpoint"]
+
+    def __init__(self, memcache_host,
         memcache_port, conf_dir, logger):
         '''
         Define any auth systems here in self.auth_systems with the config
@@ -69,10 +71,7 @@ class AuthProxy(object):
 
         self.logger = logger
 
-        self.keystone_host = keystone_host
-        self.keystone_port = keystone_port
-
-        self.auth_systems = dict()
+        self.auth_systems = {}
 
         for conf in glob(path.join(conf_dir, '*')):
 
@@ -87,14 +86,13 @@ class AuthProxy(object):
                 if driver == 'OpenStackAuth':
                     driver_type = OpenStackAuth
 
-
                 if driver == 'EucalyptusAuth':
                     driver_type = EucalyptusAuth
 
                 driver_object = driver_type(local_settings.API_HOST,
                     local_settings.MEMBER_ROLE_ID,
                     local_settings.AUTH_TOKEN_EXPIRATION,
-			glance_port=getattr(local_settings, "GLANCE_PROXY_PORT",
+                        glance_port=getattr(local_settings, "GLANCE_PROXY_PORT",
                         9292),
                     nova_port=getattr(local_settings, "NOVA_PROXY_PORT",
                         8774),
@@ -105,11 +103,11 @@ class AuthProxy(object):
                     ec2_port=getattr(local_settings, "EC2_PROXY_PORT",
                         8773))
 
-		if driver == 'OpenStackAuth':
+                if driver == 'OpenStackAuth':
                     host = config.get('auth', 'host')
                     port = config.get('auth', 'port')
 
-		    driver_object.set_keystone_info(host, port)
+                    driver_object.set_keystone_info(host, port)
 
 #                if driver == 'TestAuth':
 #                    # there are definitely smells here
@@ -121,6 +119,11 @@ class AuthProxy(object):
         memcache_string = '%s:%s' % (memcache_host, memcache_port)
 
         self.mc = memcache.Client([memcache_string], debug=0)
+
+
+    def __is_openstack_auth(self, key):
+        return key in self.auth_systems and isinstance(self.auth_systems[key],
+            OpenStackAuth)
 
 
     def __is_openstack(self, user_info):
@@ -243,12 +246,19 @@ class AuthProxy(object):
             if auth_creds is not None:
                 self.logger.debug( "Auth creds: %s", auth_creds)
                 user_info[name] = auth_creds
+                if isinstance(auth, OpenStackAuth):
+                    user_info[name]["host"] = auth.keystone_host
+                    user_info[name]["port"] = auth.keystone_port
+
 
                 if isinstance(auth, OpenStackAuth) and not has_openstack:
                     self.logger.debug("false positive")
                     has_openstack = True
                     token = auth_creds["access"]["token"]["id"]
                     id_info = auth_creds
+                    #These are the default hosts
+                    user_info["host"] = auth.keystone_host
+                    user_info["port"] = auth.keystone_port
 
         if not has_openstack and len(user_info.keys()) > 0:
             auth = self.auth_systems[user_info.keys()[0]]
@@ -297,17 +307,65 @@ class AuthProxy(object):
         :param body: body data string
         :param headers: dictionary like object of request headers
         '''
-        conn = httplib.HTTPConnection(self.keystone_host, self.keystone_port,
-            False)
-        conn.request(method, path, body, headers)
-        res = conn.getresponse().read()
-        conn.close()
-        res_object = json.loads(res)
-        if 'access' in res_object and 'token' in res_object['access']:
-            old = self.mc.get(headers['x-auth-token'])
-            self.mc.set(str(res_object['access']['token']['id']), old,
-                local_settings.AUTH_TOKEN_EXPIRATION)
 
+        if 'x-auth-token' in headers:
+            token = headers['x-auth-token']
+        else:
+            method = headers["x-auth-key"]
+            identifier = headers["x-auth-user"]
+            _, token = self.__authenticate(method, identifier)
+
+        user_info = self.mc.get(token)
+
+        if "master_tenantId" not in user_info:
+            user_info["master_tenantId"] = None
+
+        # iterate through the user_info hitting each host with the
+        # requests and updating the info based on that
+        for key in user_info:
+            if key in AuthProxy.RESERVED_WORDS or not self.__is_openstack_auth(
+                 key):
+                 continue
+
+            conn = httplib.HTTPConnection(user_info[key]["host"],
+                user_info[key]["port"], False)
+            if 'x-auth-token' in headers:
+                headers["x-auth-token"] = user_info[key]["access"]["token"]["id"]
+
+            new_path = path.replace(token, headers["x-auth-token"])
+            new_body = body.replace(token, headers["x-auth-token"])
+            if user_info["master_tenantId"] is not None and "tenantId" in user_info[key]:
+                 new_body = new_body.replace(user_info["master_tenantId"],
+                     user_info[key]["tenantId"])
+
+            conn.request(method, new_path, new_body, headers)
+            temp_res = conn.getresponse().read()
+            conn.close()
+            temp_res_object = json.loads(temp_res)
+
+            # what we need to fetch are the token and the  tenantId
+            if "tenants" in temp_res_object:
+                for tenant in temp_res_object["tenants"]:
+                    if tenant["enabled"]:
+                        user_info[key]["tenantId"] = tenant["id"]
+
+            if "access" in temp_res_object and "token" in temp_res_object["access"]:
+                token_object = temp_res_object["access"]["token"]
+                if "tenant" in token_object and "id" in token_object["tenant"]:
+                    user_info[key]["tokenId"] = token_object["id"]
+                    user_info[key]["tenantId"] = token_object["tenant"]["id"]
+
+            if user_info[key]["host"] == user_info["host"]:
+                if "tenantId" in user_info[key]:
+                    user_info["master_tenantId"] = user_info[key]["tenantId"]
+                res_object = temp_res_object
+                res = temp_res
+
+        if "access" in res_object and "token" in res_object["access"]:
+             new_token = str(res_object["access"]["token"]["id"])
+             self.mc.set(new_token, user_info, local_settings.AUTH_TOKEN_EXPIRATION)
+
+        self.mc.set(token, user_info, local_settings.AUTH_TOKEN_EXPIRATION)
 
         for old in local_settings.PROXY_REPLACE.keys():
             self.logger.debug("REPLACEING %s with %s", old,
@@ -317,7 +375,7 @@ class AuthProxy(object):
         for port in local_settings.PROXY_ENDPOINT_PORTS:
             # maybe just do a regex and replace any host not just
             # the keystone host
-            res = res.replace("%s:%d" % (self.keystone_host, port),
+            res = res.replace("%s:%d" % (user_info["host"], port),
                 "%s:%d" %  (local_settings.API_HOST, port))
 
         self.logger.debug( "Forwarded request")
@@ -357,17 +415,12 @@ class AuthProxy(object):
 if __name__ == '__main__':
     import optparse
     parser = optparse.OptionParser(
-        usage='%prog --port=PORT --keystone_host=HOST'
+        usage='%prog --port=PORT'
         )
     parser.add_option(
         '-p', '--port', default='5000',
         dest='port', type='int',
         help='Port to serve on (default 5000)')
-
-    parser.add_option(
-        '-k', '--keystone_host', default=local_settings.KEYSTONE_HOST,
-        dest='keystone_host', type='str',
-        help='Keystone host (default %s)' % local_settings.KEYSTONE_HOST)
 
     parser.add_option(
         '-c', '--config_dir', default=local_settings.CONF_DIR,
@@ -399,8 +452,8 @@ if __name__ == '__main__':
 
     logger.addHandler(logFile)
 
-    app = AuthProxy(options.keystone_host, options.port, '127.0.0.1',
-        11211, options.config_dir, logger)
+    app = AuthProxy(options.port, '127.0.0.1', 11211,
+        options.config_dir, logger)
 
     from wsgiref.simple_server import make_server
     httpd = make_server('localhost', options.port, app)
@@ -409,3 +462,4 @@ if __name__ == '__main__':
         httpd.serve_forever()
     except KeyboardInterrupt:
         print '^C'
+

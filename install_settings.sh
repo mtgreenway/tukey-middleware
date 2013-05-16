@@ -3,12 +3,13 @@
 # Somewhat sloppy but hopefully complete script for installing the 
 # tukey middleware.  Meant mostly for thourough documentation.
 
-declare -A PORTS=( ["auth"]=5000 ["nova"]=8774 ["glance"]=9292)
+# settings for running tukey on the same node as the cloud controller
+declare -A PORTS=( ["auth"]=5100 ["nova"]=8874 ["glance"]=9392)
 declare -A WSGI_DIRS=( ["auth"]="auth_proxy" ["nova"]="tukey_cli" ["glance"]="tukey_cli")
 
-PROXY_HOST="localhost"
+PROXY_HOST="127.0.0.2"
 
-CREATE_NEW_INTERFACE=false
+CREATE_NEW_INTERFACE=true
 CLONE_MIDDLEWARE=true
 
 TEMP_DIR=tukey-middleware
@@ -27,9 +28,8 @@ TEMP_DIR=tukey-middleware
 # make this be an absolute url
 MIDDLEWARE_DIR=/var/www/tukey/tukey-middleware
 
-#TUKEY_USER=tukey
-TUKEY_USER=ubuntu
-#TUKEY_GROUP=tukey
-TUKEY_GROUP=ubuntu
+TUKEY_USER=tukey
+TUKEY_GROUP=tukey
 
 APACHE_SITES_AVAILABLE=/etc/apache2/sites-available
+
