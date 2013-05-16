@@ -54,13 +54,14 @@ def get_usages(resources, attributes):
 
 def main():
 
-    conn_template = "dbname='%s' user='%s' host='%s' password='%s'"
+    conn_template = "dbname='%s' user='%s' host='%s' password='%s' port=%s"
     db_name = local_settings.USAGE_DB_NAME
     db_username = local_settings.USAGE_DB_USERNAME
     db_password = local_settings.USAGE_DB_PASSWORD
     host = local_settings.USAGE_DB_HOST
+    port = local_settings.USAGE_DB_PORT
 
-    conn_str = conn_template % (db_name, db_username, host, db_password)
+    conn_str = conn_template % (db_name, db_username, host, db_password, port)
 
     # if can't connect to db don't recover
     conn = psycopg2.connect(conn_str)

@@ -15,6 +15,7 @@ logFile = logging.handlers.WatchedFileHandler('/var/log/tukey/tukey-api.log')
 logFile.setFormatter(formatter)
 
 logger.addHandler(logFile)
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 application = tukey_server.OpenStackApiProxy(8774, '127.0.0.1', 11211, logger)
