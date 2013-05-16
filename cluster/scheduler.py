@@ -106,7 +106,7 @@ def launch_instances(project_id, auth_token, cloud, image, flavor, number,
         "server":  {
             "name": "%s-torque-headnode-%s" % (cloud, cluster_id),
             "flavorRef": 1,
-            "imageRef": image,
+            "imageRef": local_settings.clouds[cloud]["torque_image"],
             "max_count": 1,
             "min_count": 1,
             "user_data": head_node_user_data,
@@ -163,7 +163,8 @@ def launch_cluster(project_id, auth_token, cloud, username, image, flavor,
 
     rand_base = "0000000%s" % random.randrange(sys.maxint)
     date = datetime.datetime.now()
-    cluster_id = "%s_%s" % (rand_base[-8:], date.strftime("%m-%d-%y"))
+    # underscore is not allowed in a hostname
+    cluster_id = "%s-%s" % (rand_base[-8:], date.strftime("%m-%d-%y"))
 
     status = launch_instances(project_id, auth_token, cloud, image, flavor,
         number, cluster_id, username)
