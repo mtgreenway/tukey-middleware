@@ -99,8 +99,11 @@ def launch_instances(project_id, auth_token, cloud, image, flavor, number,
     ''' Launch a tiny headnode and number compute nodes with flavor and image
     '''
     
-    head_node_user_data = get_user_data("torque-server.sh",
-        {"username": username, "cluster_id": cluster_id, "nodes": number})
+    head_node_user_data = get_user_data("torque_server.py",
+        {"username": username, "cluster_id": cluster_id, "nodes": number,
+            "host": local_settings.clouds[cloud]["nova_host"], 
+            "port": local_settings.clouds[cloud]["nova_port"],
+            "auth_token": auth_token, "tenant_id": project_id})
 
     head_node = {
         "server":  {
@@ -124,30 +127,34 @@ def launch_instances(project_id, auth_token, cloud, image, flavor, number,
     compute_node_user_data = get_user_data("torque-node.sh", 
         {"username": username, "cluster_id": cluster_id})
 
-    for i in range(int(number)):
+    #for i in range(int(number)):
 
-        compute_node = {
-            "server":  {
-                "name": "%s-torque-node%s-%s" % (cloud, i + 1, cluster_id),
-                "flavorRef": flavor,
-                "imageRef": image,
-                "max_count": 1,
-                "min_count": 1,
-                "user_data": compute_node_user_data,
-                "security_groups": [{"name": "default"}]
-            }
+    compute_node = {
+        "server":  {
+            "name": "%s-torque-node-%s" % (cloud, cluster_id),
+            "flavorRef": flavor,
+            "imageRef": image,
+            "max_count": number,
+            "min_count": number,
+            "user_data": compute_node_user_data,
+            "security_groups": [{"name": "default"}]
         }
+    }
 
-        response = node_launch_request(project_id, auth_token, compute_node)
+    response = node_launch_request(project_id, auth_token, compute_node)
 
-        if response.status_code != 200:
-            # terminate all the previously launched instances
-            for node_id in node_ids:
-                node_delete_request(project_id, auth_token, node_id)
-            return response.status_code
+    if response.status_code != 200:
+        logger.debug(response.status_code)
+        logger.debug(response.text)
+        logger.debug("Couldn't launch instances")
+        logger.debug("going to kill and nova dont care")
+        # terminate all the previously launched instances
+        for node_id in node_ids:
+            node_delete_request(project_id, auth_token, node_id)
+        return response.status_code
 
-        node_response = json.loads(response.text)
-        node_ids.append([node_response["server"]["id"]])
+    node_response = json.loads(response.text)
+    node_ids.append([node_response["server"]["id"]])
         
     return 200 
 

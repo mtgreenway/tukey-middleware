@@ -266,7 +266,7 @@ class TukeyCli(object):
             json_string is the result of command for a particular site
             add the tag attribute to each entry as specified in the conf
         '''
-        if site == "all":
+        if site == "all" or json_string == '[{"error": ""}]':
             return json_string
 
         if site.startswith("login"): 
@@ -276,9 +276,13 @@ class TukeyCli(object):
         else:
             name = local_settings.clouds[site]["name"]
 
+	print json_string
+
         json_string = self.trans.add_attr(json_string, "cloud", name)
         json_string = self.trans.add_attr(json_string, "cloud_name", name)
         json_string = self.trans.add_attr(json_string, "cloud_id", site)
+
+	print json_string
 
         return json_string
 
