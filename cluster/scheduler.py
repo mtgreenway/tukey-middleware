@@ -24,6 +24,32 @@ class connect_error():
     def __init__(self):
         self.status_code = 500
 
+def get_instances(project_id, auth_token):
+    ''' query the api for instances '''
+
+    host = '%s:%s' % (local_settings.API_HOST, local_settings.NOVA_PROXY_PORT)
+
+    url = "http://%s/v2/%s/servers/detail" % (host, project_id)
+
+    headers = {
+        "X-Auth-Project-Id": project_id,
+        "X-Auth-Token": auth_token
+    }
+
+    try:
+        response = requests.get(url, headers=headers)
+    except requests.exceptions.ConnectionError:
+        return connect_error()
+
+    return response
+
+
+def get_instance_name(project_id, auth_token, cloud, instance_id, instances):
+    ''' Find this instance's name '''
+    for instance in instances["servers"]:
+        if instance["id"] == instance_id and instance["cloud_id"] == cloud:
+            return instance["name"]
+
 
 def node_delete_request(project_id, auth_token, node_id):
     ''' delete the node '''
@@ -184,13 +210,42 @@ def launch_cluster(project_id, auth_token, cloud, username, image, flavor,
  
     return json.dumps({"servers": [ {"id": ""} for i in range(int(number)) ] })
 
-    #return content
 
+def delete_cluster(project_id, auth_token, cloud, username, instance_id):
+    ''' Find the name of the instance then all instances with that same name
+     and the headnode and delete all of those instances. '''
+     
+    real_id = instance_id[len("cluster" + cloud) + 1:]
+
+    instances = json.loads(get_instances(project_id, auth_token).text)
+    name = get_instance_name(project_id, auth_token, cloud, real_id, instances)
+    torque_id = "-".join(name.split("-")[2:])
+
+    error = False
+
+    for instance in instances["servers"]:
+        base = "-".join(instance["name"].split("-")[:2])
+        name_id = "-".join(instance["name"].split("-")[2:])
+        if (base == "torque-node" or base == "torque-headnode") and \
+            name_id == torque_id:
+            logger.debug("deleting %s %s", instance["id"], instance["name"])
+            response = node_delete_request(project_id, auth_token, instance["id"])
+            if response.status_code != 200:
+                error = True 
+            logger.debug(response.text)
+    if error:
+        return '{"message": "Not all nodes could be deleted.", "code": 409}'
+    return '{"server": []}'
+         
 
 def main():
     logger.debug("in main")
-    print launch_cluster(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4],
-        sys.argv[5], sys.argv[6], sys.argv[7])
+    if len(sys.argv) == 8:
+        print launch_cluster(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4],
+            sys.argv[5], sys.argv[6], sys.argv[7])
+    elif len(sys.argv) == 6:
+        print delete_cluster(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4],
+            sys.argv[5])
 
 
 if __name__ == "__main__":

@@ -282,11 +282,8 @@ class OpenStackApiProxy(object):
         # Capitlizatoin matters in dict
         headers["X-Auth-Token"] = token_id
         headers["X-Auth-Project-Id"] = tenant_id
-        print "auth token", headers["X-Auth-Token"]
-        print "before path", path
         if default_tenant is not None:
             path = path.replace(default_tenant, tenant_id)
-            print "after path", path
         conn.request(req.method, path, req.body, headers)
         response = conn.getresponse()
         if response.status == 404:

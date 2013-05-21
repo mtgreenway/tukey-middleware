@@ -265,6 +265,8 @@ class TukeyCli(object):
         '''
             json_string is the result of command for a particular site
             add the tag attribute to each entry as specified in the conf
+            TODO: this is transitioning from the old style config to the
+            new this needs to be redone.
         '''
         if site == "all" or json_string == '[{"error": ""}]':
             return json_string
@@ -276,13 +278,10 @@ class TukeyCli(object):
         else:
             name = local_settings.clouds[site]["name"]
 
-	print json_string
 
         json_string = self.trans.add_attr(json_string, "cloud", name)
         json_string = self.trans.add_attr(json_string, "cloud_name", name)
         json_string = self.trans.add_attr(json_string, "cloud_id", site)
-
-	print json_string
 
         return json_string
 
@@ -341,8 +340,7 @@ class TukeyCli(object):
                 if cmd == TukeyCli.__PROXY_COMMAND:
                     site_values = self.__site_values(site, values)
                     host = config.get(TukeyCli.__PROXY_SECTION, 'host')
-                    raw_output = proxy_method(host,
-                        site_values["tokenId"],
+                    raw_output = proxy_method(host, site_values["tokenId"],
                         site_values["tenantId"])
                 else:
                     p = Popen(cmd, shell=True, executable='/bin/bash', stdout=PIPE, stderr=PIPE)
@@ -352,8 +350,7 @@ class TukeyCli(object):
                     if raw_output == TukeyCli.__PROXY_COMMAND:
                         site_values = self.__site_values(site, values)
                         host = config.get(TukeyCli.__PROXY_SECTION, 'host')
-                        raw_output = proxy_method(host,
-                             site_values["tokenId"],
+                        raw_output = proxy_method(host, site_values["tokenId"],
                              site_values["tenantId"])
 
                 result = self.strip(raw_output, site, command_name)
@@ -374,7 +371,9 @@ class TukeyCli(object):
 
                 if not single:
                     results += self.trans.decode(result)
-                elif result != self.trans.empty_none() and result != self.trans.empty():
+                elif result != self.trans.empty_none() \
+                    and result != self.trans.empty() \
+                    and result != '[{"error": ""}]':
                     results = self.trans.decode(result)
                     try:
                         results = results[0]
