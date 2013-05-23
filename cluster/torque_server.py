@@ -61,6 +61,7 @@ pbs_sched''',
 
     qmgr -c "create node $p"
     qmgr -c "set node $p state = free"
+    qmgr -c "set node $p np=%(cores)s"
 done '''])
 
 f = open('/tmp/setup_nodes.sh', 'w+')

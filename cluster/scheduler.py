@@ -110,6 +110,40 @@ def node_launch_request(project_id, auth_token, node_object):
     return response
 
 
+def flavor_request(project_id, auth_token, flavor):
+    ''' Get details about this flavor '''
+
+    host = '%s:%s' % (local_settings.API_HOST, local_settings.NOVA_PROXY_PORT)
+
+    headers = {
+        'Host': host,
+        'Accept': 'application/json',
+        'User-Agent': 'python-novaclient',
+        'Content-Type': 'application/json',
+        'Accept-Encoding': 'gzip, deflate',
+        'X-Auth-Project-Id': project_id,
+        'X-Auth-Token': auth_token
+    }
+
+    url = 'http://%s/v2/%s/flavors/%s' % (host, project_id, flavor)
+
+    try:
+        response = requests.get(url, headers=headers)
+    except requests.exceptions.ConnectionError:
+        return connect_error()
+
+    return response
+
+
+def get_cores(project_id, auth_token, flavor):
+    ''' Get the number of cores this flavor has '''
+ 
+    response = flavor_request(project_id, auth_token, flavor)
+    if response.status_code == 200:
+        flavor_details = json.loads(response.text)
+        return flavor_details["flavor"]["vcpus"]
+
+
 def get_user_data(file_name, format_dict):
     ''' Read file in same dir and format with the dict then b64 encode'''
     script_file = open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -125,11 +159,14 @@ def launch_instances(project_id, auth_token, cloud, image, flavor, number,
     ''' Launch a tiny headnode and number compute nodes with flavor and image
     '''
     
+    cores = get_cores(project_id, auth_token, flavor)
+
     head_node_user_data = get_user_data("torque_server.py",
         {"username": username, "cluster_id": cluster_id, "nodes": number,
             "host": local_settings.clouds[cloud]["nova_host"], 
             "port": local_settings.clouds[cloud]["nova_port"],
-            "auth_token": auth_token, "tenant_id": project_id})
+            "auth_token": auth_token, "tenant_id": project_id,
+            "cores": cores})
 
     head_node = {
         "server":  {
