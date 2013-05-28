@@ -26,18 +26,19 @@ conn = httplib.HTTPConnection(host, port)
 conn.request("GET", "/".join(["/v2", tenant_id, "servers/detail"]), None, headers)
 response = conn.getresponse()
 
-node = 0
 setup_nodes = "#!/bin/bash"
 hostnames = ""
 
 for i in json.loads(response.read())["servers"]:
     if i["name"] == "torque-node-" + cluster_id:
-        node = node + 1
-        host_name = "torque-node" + i["addresses"]["private"][0]["addr"].replace(".","-")
-        hostnames = " ".join([hostnames, host_name])
-        line = " ".join(["echo", i["addresses"]["private"][0]["addr"], 
-            host_name, ">> /etc/hosts"])
-    	setup_nodes = "\n".join([setup_nodes, line])
+        if "addresses" in i and "private" in i["addresses"] and \
+            len(i["addresses"]["private"]) > 0 and \
+            "addr" in i["addresses"]["private"][0]:
+            host_name = "torque-node" + i["addresses"]["private"][0]["addr"].replace(".","-")
+            hostnames = " ".join([hostnames, host_name])
+            line = " ".join(["echo", i["addresses"]["private"][0]["addr"], 
+                host_name, ">> /etc/hosts"])
+    	    setup_nodes = "\n".join([setup_nodes, line])
 
 setup_nodes = "\n".join([setup_nodes, '''
 echo /etc/local/lib/ > /etc/ld.so.conf.d/torque.conf
