@@ -4,7 +4,6 @@ import getpass
 import json
 import os
 import httplib
-import stat
 import sys
 import time
 
@@ -26,50 +25,20 @@ conn = httplib.HTTPConnection(host, port)
 conn.request("GET", "/".join(["/v2", tenant_id, "servers/detail"]), None, headers)
 response = conn.getresponse()
 
-setup_nodes = "#!/bin/bash"
-hostnames = ""
+ips = ""
 
-for i in json.loads(response.read())["servers"]:
-    if i["name"] == "torque-node-" + cluster_id:
-        if "addresses" in i and "private" in i["addresses"] and \
-            len(i["addresses"]["private"]) > 0 and \
-            "addr" in i["addresses"]["private"][0]:
-            host_name = "torque-node" + i["addresses"]["private"][0]["addr"].replace(".","-")
-            hostnames = " ".join([hostnames, host_name])
-            line = " ".join(["echo", i["addresses"]["private"][0]["addr"], 
-                host_name, ">> /etc/hosts"])
-    	    setup_nodes = "\n".join([setup_nodes, line])
+servers = [i for i in json.loads(response.read())["servers"]
+    if i["name"] == "torque-node-" + cluster_id]
 
-setup_nodes = "\n".join([setup_nodes, '''
-echo /etc/local/lib/ > /etc/ld.so.conf.d/torque.conf
-ldconfig
-echo torque-headnode-%(cluster_id)s > /var/spool/torque/server_name
-qterm
-echo y|/glusterfs/users/torque_nodes/setup_scripts/torque.setup root
-qterm
-killall pbs_server
-killall trqauthd
-killall pbs_sched
-pbs_server
-trqauthd
-pbs_sched''',
-"for p in " + hostnames, 
-'''do
-    while ! nc -z $p 15002
-    do
-        sleep 1
-    done
+for i in servers:
+    try:
+        ips = " ".join([ips, i["addresses"]["private"][0]["addr"]])
+    except KeyError:
+        pass
 
-    qmgr -c "create node $p"
-    qmgr -c "set node $p state = free"
-    qmgr -c "set node $p np=%(cores)s"
-done '''])
+ips = '"' + ips + '"'
 
-f = open('/tmp/setup_nodes.sh', 'w+')
-f.write(setup_nodes)
-f.close()
-st = os.stat('/tmp/setup_nodes.sh')
-os.chmod('/tmp/setup_nodes.sh', st.st_mode | stat.S_IEXEC)
-
-os.system('sudo /tmp/setup_nodes.sh')
+os.system(" ".join(["sudo",
+    "/glusterfs/users/torque_nodes/headnode/tukey_headnode.sh", cluster_id,
+    ips, "%(cores)s"]))
 
