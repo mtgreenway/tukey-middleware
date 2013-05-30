@@ -5,11 +5,7 @@
 # using our own nova proxy and conventions:
 # call this service with cloudname that is the correct way.
 
-#arguments to this should be
-
-#${sullivan/access/token/id}
-
-#${sullivan/access/user/id}
+#arguments to this should be ${sullivan/access/token/id} ${sullivan/access/user/id}
 ''' Performs a recursive http request to create keys on every cloud '''
 
 import json
@@ -35,18 +31,6 @@ HEADERS = {
     'Content-Type': 'application/json',
     'Accept-Encoding': 'gzip, deflate'
 }
-# unused
-#def delete_keypair(project_id, auth_token, name, cloud):
-#
-#    headers['X-Auth-Project-Id'] = project_id
-#    headers['X-Auth-Token']  = auth_token
-#
-#    url = 'http://127.0.0.1:8774/v1.1/%s/os-keypairs/%s-%s' % (project_id,
-#         cloud, name)
-#
-#    # NOTE: if you ever need to use this keypair is undefined so fix that!
-#    return requests.request('DELETE', url, headers=headers, data=keypair)
-#
 
 
 def create_keypair(project_id, auth_token, name, cloud, public_key=None):

@@ -45,6 +45,7 @@ class AuthSystem(object):
 class FakeId(object):
     '''Mixin for non Keystone authentication methods to return the
     Keystone API for token, tenant and endpoint
+    TODO: api_url is actually a host not an url
     '''
 
     def __init__(self, api_url, member_role_id, token_lifetime,
@@ -52,6 +53,7 @@ class FakeId(object):
         identity_admin_port=35357, identity_port=5000):
 
         self.token_lifetime = token_lifetime
+        # TODO: self.url is actually a host not a url
         self.url = api_url
         self.member_role_id = member_role_id
 
