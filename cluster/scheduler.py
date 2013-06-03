@@ -242,8 +242,7 @@ def launch_cluster(project_id, auth_token, cloud, username, image, flavor,
     logger.debug(status)
 
     if status != 200:
-        print '{"message": "Not all nodes could be created.", "code": 409}'
-        sys.exit(1)
+        return '{"message": "Not all nodes could be created.", "code": 409}'
  
     return json.dumps({"servers": [ {"id": ""} for i in range(int(number)) ] })
 
