@@ -49,6 +49,8 @@ class OpenStackApiProxy(object):
 
         try:
             values = self.mc.get(auth_token)
+            if values == None:
+                 values = {}
             resp = self.handle_openstack_api(req, auth_token, values)
 
         except memcache.Client.MemcachedKeyNoneError:  
@@ -73,7 +75,7 @@ class OpenStackApiProxy(object):
     def split_cloud_name(self, oldname):
         ''' Separate the cloud name from the real name
         we are curretnly using a scheme of cloudname-thingname'''
-        split = oldname.split('-',1)
+        split_id = oldname.split('-',1)
         return split_id[0], split_id[-1]
 
 
