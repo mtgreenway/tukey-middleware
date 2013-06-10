@@ -29,6 +29,7 @@ class CloudTools:
     parser.add_option("-b", "--container", action="store", type="string", dest="container")
     parser.add_option("-o", "--object", action="store", type="string", dest="object")
     parser.add_option("-f", "--file", action="store", type="string", dest="file")
+    parser.add_option("-e", "--ec2", action="store_true", dest="ec2")
         
     euca = {'key':'EC2_ACCESS_KEY', 'secret':'EC2_SECRET_KEY', 'host':'EC2_URL', 'storage':'S3_URL'}
     

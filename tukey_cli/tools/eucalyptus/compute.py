@@ -50,15 +50,24 @@ def main():
     credFile.close()
 
     credType = CloudTools.euca
-    Driver = get_driver(Provider.EUCALYPTUS)
+    if options.ec2:
+        Driver = get_driver(Provider.EC2)
+    else:
+        Driver = get_driver(Provider.EUCALYPTUS)
 
     url = CloudTools.parseHost(credentials[credType['host']])
 
-    conn = Driver(credentials[credType['key']], secret=credentials[credType['secret']],
-                  host=url['host'], port=url['port'], path=url['path'],
-                  secure=False)
-
-    conn.list_keys = lambda : conn.connection.request(conn.path, params={'Action': 'DescribeKeyPairs'})
+    if options.ec2:
+        conn = Driver(credentials[credType['key']],
+            secret=credentials[credType['secret']], host=url['host'],
+            path=url['path'], secure=True)
+    else:
+        conn = Driver(credentials[credType['key']],
+                secret=credentials[credType['secret']], host=url['host'],
+                port=url['port'], path=url['path'], secure=False)
+    
+    conn.list_keys = lambda : conn.connection.request(conn.path,
+        params={'Action': 'DescribeKeyPairs'})
 
     api_request(options, conn)
     
