@@ -14,10 +14,10 @@ port = %(port)s
 tenant_id = "%(tenant_id)s"
 cluster_id = "%(cluster_id)s"
 
-if getpass.getuser() != project_name:
+if %(pdc)s and getpass.getuser() != project_name:
     sys.exit(1)
 
-while not os.path.exists("/glusterfs/users/torque_nodes/setup_scripts/"):
+while not os.path.exists("%(setup_dir)s"):
     time.wait(1) 
 
 headers = {"x-auth-project-id": project_name, "x-auth-token": auth_token}
@@ -38,7 +38,6 @@ for i in servers:
 
 ips = '"' + ips + '"'
 
-os.system(" ".join(["sudo",
-    "/glusterfs/users/torque_nodes/headnode/tukey_headnode.sh", cluster_id,
-    ips, "%(cores)s"]))
+os.system(" ".join(["sudo", "%(headnode_script)s", cluster_id, ips, "%(cores)s"]))
 
+os.system("echo ran /tmp/worked")

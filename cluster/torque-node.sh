@@ -1,13 +1,17 @@
 #!/bin/bash
 CLUSTER_ID=%(cluster_id)s
 
-if [ `whoami` != "%(username)s" ]
+if %(pdc)s
 then
-  exit 1
+    if [ `whoami` != "%(username)s" ]
+    then
+        exit 1
+    fi
 fi
 
 # wait for gluster to come up
-while ! ls /glusterfs/users/torque_nodes/setup_scripts/
+#while ! ls /glusterfs/users/torque_nodes/setup_scripts/
+while ! ls %(setup_dir)s
 do
     sleep 1
 done
@@ -24,4 +28,6 @@ echo '/etc/local/lib/' > $TORQ_CONF_FILE
 
 # Using a security flaw here w e will need to change this
 #sudo /tmp/setup_nodes.sh
-sudo /glusterfs/users/torque_nodes/headnode/tukey_node.sh
+#sudo /glusterfs/users/torque_nodes/headnode/tukey_node.sh
+echo "test" > /tmp/worked
+sudo %(node_script)s

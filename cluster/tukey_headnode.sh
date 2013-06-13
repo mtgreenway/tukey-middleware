@@ -7,7 +7,7 @@ echo /etc/local/lib/ > /etc/ld.so.conf.d/torque.conf
 ldconfig
 echo torque-headnode-$cluster_id > /var/spool/torque/server_name
 qterm
-echo y|/glusterfs/users/torque_nodes/setup_scripts/torque.setup root
+echo y|/cloudconf/torque/setup_scripts/torque.setup root
 qterm
 killall pbs_server
 killall trqauthd

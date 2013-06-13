@@ -151,11 +151,12 @@ def get_user_data(file_name, format_dict):
     script = script_file.read() 
     script_file.close()
     script = script % format_dict
+    logger.debug(script)
     return base64.b64encode(script)
 
 
 def launch_instances(project_id, auth_token, cloud, image, flavor, number,
-    cluster_id, username):
+    cluster_id, username, keyname):
     ''' Launch a tiny headnode and number compute nodes with flavor and image
     '''
     
@@ -166,19 +167,26 @@ def launch_instances(project_id, auth_token, cloud, image, flavor, number,
             "host": local_settings.clouds[cloud]["nova_host"], 
             "port": local_settings.clouds[cloud]["nova_port"],
             "auth_token": auth_token, "tenant_id": project_id,
-            "cores": cores})
+            "pdc": "True" if local_settings.clouds[cloud]["torque"]["pdc"] else "False",
+            "cores": cores,
+            "setup_dir": local_settings.clouds[cloud]["torque"]["setup_dir"],
+            "headnode_script": 
+                local_settings.clouds[cloud]["torque"]["headnode_script"]})
 
     head_node = {
         "server":  {
             "name": "%s-torque-headnode-%s" % (cloud, cluster_id),
-            "flavorRef": 1,
-            "imageRef": local_settings.clouds[cloud]["torque_image"],
+            "flavorRef": 3,
+            "imageRef": local_settings.clouds[cloud]["torque"]["headnode_image"],
             "max_count": 1,
             "min_count": 1,
             "user_data": head_node_user_data,
             "security_groups": [{"name": "default"}]
         }
     }
+
+    if keyname is not None:
+        head_node["server"]["key_name"] = keyname
 
     response = node_launch_request(project_id, auth_token, head_node) 
     if response.status_code != 200:
@@ -188,7 +196,10 @@ def launch_instances(project_id, auth_token, cloud, image, flavor, number,
     node_ids = [head_node_response["server"]["id"]]
 
     compute_node_user_data = get_user_data("torque-node.sh", 
-        {"username": username, "cluster_id": cluster_id})
+        {"username": username, "cluster_id": cluster_id,
+        "pdc": "true" if local_settings.clouds[cloud]["torque"]["pdc"] else "false",
+        "setup_dir": local_settings.clouds[cloud]["torque"]["setup_dir"],
+        "node_script": local_settings.clouds[cloud]["torque"]["node_script"]})
 
     #for i in range(int(number)):
 
@@ -203,6 +214,9 @@ def launch_instances(project_id, auth_token, cloud, image, flavor, number,
             "security_groups": [{"name": "default"}]
         }
     }
+
+    if keyname is not None:
+        compute_node["server"]["key_name"] = keyname
 
     response = node_launch_request(project_id, auth_token, compute_node)
 
@@ -223,13 +237,14 @@ def launch_instances(project_id, auth_token, cloud, image, flavor, number,
 
 
 def launch_cluster(project_id, auth_token, cloud, username, image, flavor,
-    number):
+    number, keyname=None):
     ''' Main cluster launch method.  Launches the instances needed for the 
     cluster then dispatches the request to the cluster service running on 
     the cloud headnode where it can run the specialized boot up services.
     TODO: There might actually be no reason to have a centralized cluster 
     service we can use -f to tell the each node in the cluster exactly what
     it needs to do. '''
+    logger.debug("launching cluster")
 
     rand_base = "0000000%s" % random.randrange(sys.maxint)
     date = datetime.datetime.now()
@@ -237,7 +252,7 @@ def launch_cluster(project_id, auth_token, cloud, username, image, flavor,
     cluster_id = "%s-%s" % (rand_base[-8:], date.strftime("%m-%d-%y"))
 
     status = launch_instances(project_id, auth_token, cloud, image, flavor,
-        number, cluster_id, username)
+        number, cluster_id, username, keyname)
 
     logger.debug(status)
 
@@ -250,6 +265,7 @@ def launch_cluster(project_id, auth_token, cloud, username, image, flavor,
 def delete_cluster(project_id, auth_token, cloud, username, instance_id):
     ''' Find the name of the instance then all instances with that same name
      and the headnode and delete all of those instances. '''
+    logger.debug("deleting cluster")
      
     real_id = instance_id[len("cluster" + cloud) + 1:]
 
@@ -279,6 +295,9 @@ def main():
     if len(sys.argv) == 8:
         print launch_cluster(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4],
             sys.argv[5], sys.argv[6], sys.argv[7])
+    if len(sys.argv) == 9:
+        print launch_cluster(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4],
+            sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8])
     elif len(sys.argv) == 6:
         print delete_cluster(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4],
             sys.argv[5])
