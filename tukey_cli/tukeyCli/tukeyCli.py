@@ -340,7 +340,11 @@ class TukeyCli(object):
                 if cmd == TukeyCli.__PROXY_COMMAND:
                     site_values = self.__site_values(site, values)
                     host = config.get(TukeyCli.__PROXY_SECTION, 'host')
-                    raw_output = proxy_method(host, site_values["tokenId"],
+                    if 'path' in config.options(TukeyCli.__PROXY_SECTION):
+                        api_path = config.get(TukeyCli.__PROXY_SECTION, 'path')
+                    else:
+                        api_path = ''
+                    raw_output = proxy_method(host, api_path, site_values["tokenId"],
                         site_values["tenantId"])
                 else:
                     p = Popen(cmd, shell=True, executable='/bin/bash', stdout=PIPE, stderr=PIPE)

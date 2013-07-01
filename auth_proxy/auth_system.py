@@ -222,13 +222,14 @@ class OpenStackAuth(AuthSystem, FakeId):
     OpenStack credentials.
     '''
 
-    def set_keystone_info(self, keystone_host, keystone_port):
+    def set_keystone_info(self, keystone_host, keystone_port, keystone_path):
         ''' I really don't know what to do here: these are vital so I want to
         put them in the constructor however i dont rewrite a bunch and lose the
         niceity of the polymorphic constructor'''
 
         self.keystone_host = keystone_host
         self.keystone_port = keystone_port
+        self.keystone_path = keystone_path
 
 
     def authenticate(self, method, identifier, tenant, cloud_name):
@@ -266,7 +267,8 @@ class OpenStackAuth(AuthSystem, FakeId):
 
         conn = httplib.HTTPConnection(self.keystone_host, self.keystone_port)
         try:
-            conn.request("POST", "/v2.0/tokens", body, headers)
+            conn.request("POST", self.keystone_path + "/v2.0/tokens", body,
+                headers)
             res = conn.getresponse()
         except:
              logger.debug("Can't connect to %s %s", self.keystone_host,

@@ -106,8 +106,11 @@ class AuthProxy(object):
                 if driver == 'OpenStackAuth':
                     host = config.get('auth', 'host')
                     port = config.get('auth', 'port')
+                    keystone_path = ''
+                    if 'path' in config.options('auth'):
+                        keystone_path = config.get('auth', 'path')
 
-                    driver_object.set_keystone_info(host, port)
+                    driver_object.set_keystone_info(host, port, keystone_path)
 
 #                if driver == 'TestAuth':
 #                    # there are definitely smells here
@@ -249,6 +252,7 @@ class AuthProxy(object):
                 if isinstance(auth, OpenStackAuth):
                     user_info[name]["host"] = auth.keystone_host
                     user_info[name]["port"] = auth.keystone_port
+                    user_info[name]["path"] = auth.keystone_path
 
 
                 if isinstance(auth, OpenStackAuth) and not has_openstack:
@@ -338,7 +342,10 @@ class AuthProxy(object):
                  new_body = new_body.replace(user_info["master_tenantId"],
                      user_info[key]["tenantId"])
 
-            conn.request(method, new_path, new_body, headers)
+            cloud_path = user_info[key]["path"]
+            if new_path.startswith(cloud_path):
+                cloud_path = ''
+            conn.request(method, cloud_path + new_path, new_body, headers)
             temp_res = conn.getresponse().read()
             conn.close()
             temp_res_object = json.loads(temp_res)
@@ -377,6 +384,9 @@ class AuthProxy(object):
             # the keystone host
             res = res.replace("%s:%d" % (user_info["host"], port),
                 "%s:%d" %  (local_settings.API_HOST, port))
+
+        res = res.replace("https://", "http://")
+
 
         self.logger.debug( "Forwarded request")
         self.logger.debug(res)

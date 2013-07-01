@@ -266,10 +266,11 @@ class OpenStackApiProxy(object):
 
 
     def openstack_proxy(self, req, path, return_headers, default_tenant):
-        return lambda host, token_id, tenant_id: str(self.proxy_request(host,
-            token_id, tenant_id, req, path, return_headers, default_tenant))
+        return lambda host, extra_path, token_id, tenant_id: str(self.proxy_request(host,
+            extra_path, token_id, tenant_id, req, path, return_headers, default_tenant))
 
-    def proxy_request(self, host, token_id, tenant_id, req, path,
+
+    def proxy_request(self, host, extra_path, token_id, tenant_id, req, path,
             return_headers, default_tenant):
         conn = httplib.HTTPConnection(host, self.port, False)
         # EnvironHeaders has no copy method
@@ -281,7 +282,7 @@ class OpenStackApiProxy(object):
         headers["X-Auth-Project-Id"] = tenant_id
         if default_tenant is not None:
             path = path.replace(default_tenant, tenant_id)
-        conn.request(req.method, path, req.body, headers)
+        conn.request(req.method, extra_path + path, req.body, headers)
         response = conn.getresponse()
         if response.status == 404:
             res_list = '[]'
