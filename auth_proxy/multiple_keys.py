@@ -83,7 +83,7 @@ def main():
 
     if len(sys.argv) > 6:
         #if importing
-        public_key = ' '.join(sys.argv[6:])
+        public_key = ' '.join(sys.argv[5:])
         LOGGER.debug("PUB KEY %s", public_key)
     else:
         cloud = clouds[0]
