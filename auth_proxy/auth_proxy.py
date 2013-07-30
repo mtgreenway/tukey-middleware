@@ -384,11 +384,15 @@ class AuthProxy(object):
             # the keystone host
             res = res.replace("%s:%d" % (user_info["host"], port),
                 "%s:%d" %  (local_settings.API_HOST, port))
+            #Because this is the world we live in now
+            res = res.replace("%s:%d" % (local_settings.CENTRAL_API, port),
+                "%s:%d" %  (local_settings.API_HOST, port))
 
+        
         res = res.replace("https://", "http://")
 
 
-        self.logger.debug( "Forwarded request")
+        self.logger.debug("Forwarded request")
         self.logger.debug(res)
         resp = Response(res)
         resp.conditional_response = True
