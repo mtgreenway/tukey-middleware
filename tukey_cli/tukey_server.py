@@ -167,9 +167,13 @@ class OpenStackApiProxy(object):
 
             resp.headers.add('Content-Type','application/json')
 
-            if req.method == "HEAD":
-                for header, value in return_headers["headers"]:
-                    resp.headers.add(header, value)
+            #if req.method == "HEAD":
+            print "going to get headers "
+            for header_set in return_headers["headers"]:
+                for header, value in header_set:
+                    if header not in ['content-length', 'content-type', 'date']:
+                        print "HEader ", header, value
+                        resp.headers.add(header, value)
 
         except exc.HTTPException, e:
             resp = e
@@ -297,7 +301,7 @@ class OpenStackApiProxy(object):
             except ValueError:
                 res_list = res_body
         conn.close()
-        return_headers["headers"] = response.getheaders()
+        return_headers["headers"].append(response.getheaders())
         return res_list
 
 
