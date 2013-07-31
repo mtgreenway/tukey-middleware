@@ -93,21 +93,22 @@ def main():
 
     results = {}
 
-    #mc = memcache.Client(["127.0.0.1:11211"], debug=0)
+    mc = memcache.Client(["127.0.0.1:11211"], debug=0)
 
-#    try:
-#        stored_usage = mc.get("usage-%s" % tenant_id)
-#        cached = stored_usage is not None
-#    except memcache.Client.MemcachedKeyNoneError:
-#        cached = False
-    cached = False
+    try:
+        stored_usage = mc.get("usage-%s" % tenant_id)
+        cached = stored_usage is not None
+    except memcache.Client.MemcachedKeyNoneError:
+        cached = False
 
     if cached and stored_usage["start"] == _start_unix:
         cur.execute(get_usage_batch(stored_usage["stop"], _stop_unix, tenant_id))
+        batch_results = cur.fetchall()
     else:
+        cached = False
         cur.execute(get_usage_batch(_start_unix, _stop_unix, tenant_id))
+        batch_results = cur.fetchall()
 
-    batch_results = cur.fetchall()
 
     formatted = {}
     for result in batch_results:
@@ -138,14 +139,13 @@ def main():
                         formatted[cloud]["%s-raw" % key] += old[cloud]["%s-raw" % key]
                         formatted[cloud][key] = formatted[cloud]["%s-raw" % key] / formatted[cloud]["%s-count" % key]
                 old[cloud].update(formatted[cloud])
-                        
+
         old.update(formatted)
         formatted = old
-                        
 
-    #mc.set("usage-%s" % tenant_id,
-    #    {"start": _start_unix, "stop": _stop_unix, "results": formatted},
-    #    8400)
+    mc.set("usage-%s" % tenant_id,
+        {"start": _start_unix, "stop": _stop_unix, "results": formatted},
+        2592000)
 
     for resource, attr, name in usages:
         result_key = name + '_' + attr
