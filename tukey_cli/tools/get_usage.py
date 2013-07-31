@@ -5,6 +5,7 @@ import os
 import psycopg2
 import sys
 import time
+import memcache
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../local')
 import local_settings
@@ -92,11 +93,21 @@ def main():
 
     results = {}
 
-    # run the master query and then query that for what we would like
-    cur.execute(get_usage_batch(_start_unix, _stop_unix, tenant_id))
+    mc = memcache.Client(["127.0.0.1:11211"], debug=0)
+
+    try:
+        stored_usage = mc.get("usage-%s" % tenant_id)
+        cached = stored_usage is not None
+    except memcache.Client.MemcachedKeyNoneError:
+        cached = False
+
+    if cached and stored_usage["start"] == _start_unix:
+        cur.execute(get_usage_batch(stored_usage["stop"], _stop_unix, tenant_id))
+    else:
+        cur.execute(get_usage_batch(_start_unix, _stop_unix, tenant_id))
+
     batch_results = cur.fetchall()
 
-    # possibly make this into a dict comprehension
     formatted = {}
     for result in batch_results:
         attr = result[1].split('-')[1]
@@ -108,6 +119,32 @@ def main():
             formatted[result[0]][attr] = result[2] / 60
         else:
             formatted[result[0]][attr] = result[2] / result[3]
+            formatted[result[0]]["%s-count" % attr] = result[3]
+            formatted[result[0]]["%s-raw" % attr] = result[2]
+
+    if cached:
+        old = stored_usage["results"]
+        for cloud, data in formatted.items():
+            if cloud in old:
+                for key, value in formatted[cloud].items():
+                    if key not in old[cloud] or key.split('-')[-1] in ['count', 'raw']:
+                        continue
+
+                    if key in local_settings.USAGE_HOURS:
+                        formatted[cloud][key] += old[cloud][key]
+                    else:
+                        formatted[cloud]["%s-count" % key] += old[cloud]["%s-count" % key]
+                        formatted[cloud]["%s-raw" % key] += old[cloud]["%s-raw" % key]
+                        formatted[cloud][key] = formatted[cloud]["%s-raw" % key] / formatted[cloud]["%s-count" % key]
+                old[cloud].update(formatted[cloud])
+                        
+        old.update(formatted)
+        formatted = old
+                        
+
+    mc.set("usage-%s" % tenant_id,
+        {"start": _start_unix, "stop": _stop_unix, "results": formatted},
+        8400)
 
     for resource, attr, name in usages:
         result_key = name + '_' + attr
