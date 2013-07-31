@@ -93,13 +93,14 @@ def main():
 
     results = {}
 
-    mc = memcache.Client(["127.0.0.1:11211"], debug=0)
+    #mc = memcache.Client(["127.0.0.1:11211"], debug=0)
 
-    try:
-        stored_usage = mc.get("usage-%s" % tenant_id)
-        cached = stored_usage is not None
-    except memcache.Client.MemcachedKeyNoneError:
-        cached = False
+#    try:
+#        stored_usage = mc.get("usage-%s" % tenant_id)
+#        cached = stored_usage is not None
+#    except memcache.Client.MemcachedKeyNoneError:
+#        cached = False
+    cached = False
 
     if cached and stored_usage["start"] == _start_unix:
         cur.execute(get_usage_batch(stored_usage["stop"], _stop_unix, tenant_id))
@@ -142,9 +143,9 @@ def main():
         formatted = old
                         
 
-    mc.set("usage-%s" % tenant_id,
-        {"start": _start_unix, "stop": _stop_unix, "results": formatted},
-        8400)
+    #mc.set("usage-%s" % tenant_id,
+    #    {"start": _start_unix, "stop": _stop_unix, "results": formatted},
+    #    8400)
 
     for resource, attr, name in usages:
         result_key = name + '_' + attr
