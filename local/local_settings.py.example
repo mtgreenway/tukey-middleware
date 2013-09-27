@@ -81,7 +81,7 @@ clouds = {
 	"usage_cloud": False
     },
     "pdc": {
-    "name": "PDC"
+    "name": "PDC",
     "nova_host": "10.103.105.2",
     "nova_port": 8774,
     "keystone_host": "10.103.105.2",
