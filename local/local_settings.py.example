@@ -52,7 +52,7 @@ clouds = {
         "gpg_pubkey": 'adler.pub',
         "passphrase": "",
         "host": "10.103.112.1",
-        "sshkey_port": 5005
+        "sshkey_port": 5005,
         "cluster_port": 6006
     },
 	"usage_cloud": True
@@ -68,7 +68,7 @@ clouds = {
         "gpg_pubkey": 'sullivan.pub',
         "passphrase": "",
         "host": "10.103.114.1",
-        "sshkey_port": 5005
+        "sshkey_port": 5005,
         "cluster_port": 6006
         },
     "torque": {
@@ -84,13 +84,13 @@ clouds = {
     "name": "PDC"
     "nova_host": "10.103.105.2",
     "nova_port": 8774,
-    "keystone_host": 10.103.105.2,
+    "keystone_host": "10.103.105.2",
     "keystone_port": 5000,
     "login_node": {
         "gpg_pubkey": 'sullivan.pub',
         "passphrase": "",
         "host": "10.103.105.1",
-        "sshkey_port": 5005
+        "sshkey_port": 5005,
         "cluster_port": 6006
     }
     }
