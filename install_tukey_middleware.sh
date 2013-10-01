@@ -30,12 +30,13 @@ then
 	sudo cp -r $TEMP_DIR $MIDDLEWARE_DIR
 	sudo chown -R $USER $MIDDLEWARE_DIR
 	cd $MIDDLEWARE_DIR
+	sudo ln -s $LOCAL_SETTINGS_FILE $MIDDLEWARE_DIR/local/local_settings.py
 fi
 
 # Need to symlink this 
-sudo ln -s $LOCAL_SETTINGS_FILE $MIDDLEWARE_DIR/local/local_settings.py
+#sudo ln -s $LOCAL_SETTINGS_FILE $MIDDLEWARE_DIR/local/local_settings.py
 
-cd $MIDDLEWARE_DIR
+#cd $MIDDLEWARE_DIR
 
 # the parameters we can pass to this script to prevent it from installing
 # the database is:		--no-database
@@ -43,7 +44,8 @@ cd $MIDDLEWARE_DIR
 # No apache:			--no-apache
 
 # do the apache stuff ourself
-sudo python tools/install_venv.py --no-apache --no-database
+#sudo python tools/install_venv.py --no-apache --no-database
+sudo python tools/install_venv.py 
 
 # need to configure these bad boys first 
 
@@ -80,8 +82,8 @@ Listen ${PORTS[$site_name]}" | sudo tee -a /etc/apache2/ports.conf > /dev/null
 done
 
 # Create configuration files from templates
-sudo ln -s $CONFIG_GEN_SETTINGS_FILE $MIDDLEWARE_DIR/config_gen/settings.py
-sudo python $MIDDLEWARE_DIR/config_gen/config_gen.py $MIDDLEWARE_DIR
+#sudo ln -s $CONFIG_GEN_SETTINGS_FILE $MIDDLEWARE_DIR/config_gen/settings.py
+#sudo python $MIDDLEWARE_DIR/config_gen/config_gen.py $MIDDLEWARE_DIR
 
 # linking pgp public keys 
 

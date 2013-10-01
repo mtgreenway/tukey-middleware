@@ -221,8 +221,9 @@ def main():
     if options.database:
         create_log_dir()
 
-    if options.apache:
-        create_apache_config()
+# Commenting out duplicate logic
+#    if options.apache:
+#        create_apache_config()
 
     print_summary()
 
