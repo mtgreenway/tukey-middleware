@@ -13,8 +13,8 @@ CONF_DIR = '/var/www/tukey/tukey-middleware/tukey_cli/etc/enabled/'
 KEY_DIR = '/var/www/tukey/tukey-middleware/tukey_cli/etc/keys/'
 # Directory to write logs to
 import logging
-LOG_LEVEL = logging.INFO
-#LOG_LEVEL = logging.DEBUG
+#LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.DEBUG
 LOG_DIR = '/var/log/tukey/'
 LOG_FORMAT = '%(asctime)s %(levelname)s %(message)s %(filename)s:%(lineno)d'
 # If you have setup an external usage service
@@ -98,7 +98,7 @@ clouds = {
 
 # used in auth_proxy to switch host to localhost for
 # endpoint request 
-PROXY_ENDPOINT_PORTS = [5000,8774,9292,35357]
+PROXY_ENDPOINT_PORTS = [5100,8874,9392,35357]
 
 # used in auth proxy to replace in values in the
 # forwarded response body
