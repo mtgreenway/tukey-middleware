@@ -9,7 +9,7 @@ AUTH_DB_HOST = '127.0.0.1'
 USER = 'ubuntu'
 # directory with api mapping files
 # we should be able to remove this
-CONF_DIR = '/var/www/tukey/tukey-middleware/tukey_cli/etc/enabled/'
+CONF_DIR = '/home/ubuntu/tukey-middleware-1/tukey_cli/etc/enabled/'
 KEY_DIR = '/var/www/tukey/tukey-middleware/tukey_cli/etc/keys/'
 # Directory to write logs to
 import logging
