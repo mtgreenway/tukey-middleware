@@ -4,7 +4,7 @@
 # tukey middleware.  Meant mostly for thourough documentation.
 
 # settings for running tukey on the same node as the cloud controller
-declare -A PORTS=( ["auth"]=5100 ["nova"]=8874 ["glance"]=9392)
+declare -A PORTS=( ["auth"]=5000 ["nova"]=8774 ["glance"]=9292)
 declare -A WSGI_DIRS=( ["auth"]="auth_proxy" ["nova"]="tukey_cli" ["glance"]="tukey_cli")
 
 PROXY_HOST="127.0.0.1"

@@ -98,22 +98,23 @@ clouds = {
 
 # used in auth_proxy to switch host to localhost for
 # endpoint request 
-PROXY_ENDPOINT_PORTS = [5100,8874,9392,35357]
+#PROXY_ENDPOINT_PORTS = [5100,8874,9392,35357]
 
 # used in auth proxy to replace in values in the
 # forwarded response body
 # This kills the volume service with fire
 #PROXY_REPLACE = {'volume': ''}
-PROXY_REPLACE = {'Volume': '', 'volume': '', '5000':'5100', '8774':'8874', '9292':'9392'}
+#PROXY_REPLACE = {'Volume': '', 'volume': '', '5000':'5100', '8774':'8874', '9292':'9392'}
+PROXY_REPLACE = {'Volume': '', 'volume': ''}
 
 AUTH_TOKEN_EXPIRATION = 24*60*60
 
 API_HOST = '127.0.0.1'
 
 # The port of the nova api
-NOVA_PROXY_PORT = 8874
-GLANCE_PROXY_PORT = 9392
-AUTH_PROXY_PORT = 5100
+#NOVA_PROXY_PORT = 8874
+#GLANCE_PROXY_PORT = 9392
+#AUTH_PROXY_PORT = 5100
 
 # Required for Swift somehow this will be determined
 # at OpenStack cloud install time
