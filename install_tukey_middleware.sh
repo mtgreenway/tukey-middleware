@@ -58,8 +58,8 @@ NameVirtualHost $PROXY_HOST:${PORTS[$site_name]}
 <Virtualhost $PROXY_HOST:${PORTS[$site_name]}>
 
 RewriteEngine On
-RewriteRule ^/sullivan/(.*) /$1 [PT]
-RewriteRule ^/goldberg/(.*) /$1 [PT]
+RewriteRule ^/sullivan/(.*) /\$1 [PT]
+RewriteRule ^/goldberg/(.*) /\$1 [PT]
 
 WSGIScriptAlias / $MIDDLEWARE_DIR/${WSGI_DIRS[$site_name]}/${site_name}_wsgi.py
 
