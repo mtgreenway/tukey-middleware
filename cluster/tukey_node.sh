@@ -2,8 +2,9 @@
 CONF_FILE=/tmp/torque_config
 TORQ_CONF_FILE=/tmp/torque_config2
 
-hostname torque-node$(ip a s eth0|grep inet|head -n1|cut -d' ' -f6|cut -d/ -f1|tr . -)
-echo 127.0.0.1 torque-node$(ip a s eth0|grep inet|head -n1|cut -d' ' -f6|cut -d/ -f1|tr . -) >> /etc/hosts
+torque_ip=$(ip a s eth0|grep inet|head -n1|cut -d' ' -f6|cut -d/ -f1)
+hostname torque-node$(echo $torque_ip|tr . -)
+echo $torque_ip torque-node$(ip a s eth0|grep inet|head -n1|cut -d' ' -f6|cut -d/ -f1|tr . -) >> /etc/hosts
 chown root:root $TORQ_CONF_FILE
 mv $TORQ_CONF_FILE /etc/ld.so.conf.d/torque.conf
 ldconfig
