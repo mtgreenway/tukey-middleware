@@ -103,10 +103,12 @@ def main():
 
     if cached and stored_usage["start"] == _start_unix:
         cur.execute(get_usage_batch(stored_usage["stop"], _stop_unix, tenant_id))
+        batch_results = cur.fetchall()
     else:
+        cached = False
         cur.execute(get_usage_batch(_start_unix, _stop_unix, tenant_id))
+        batch_results = cur.fetchall()
 
-    batch_results = cur.fetchall()
 
     formatted = {}
     for result in batch_results:
@@ -140,11 +142,10 @@ def main():
                         
         old.update(formatted)
         formatted = old
-                        
 
     mc.set("usage-%s" % tenant_id,
         {"start": _start_unix, "stop": _stop_unix, "results": formatted},
-        8400)
+        2592000)
 
     for resource, attr, name in usages:
         result_key = name + '_' + attr
