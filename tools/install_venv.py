@@ -203,7 +203,8 @@ def main():
 
     parser.add_option("--no-logdir", dest="logdir", action="store_false")
 
-    parser.add_option("--no-pip", dest="pip", action="store_false")
+    parser.add_option("--no-pip", dest="pip", default=True,
+        action="store_false")
 
     (options, _) = parser.parse_args()
 

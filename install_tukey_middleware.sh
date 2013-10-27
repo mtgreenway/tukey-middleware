@@ -43,7 +43,7 @@ cd $MIDDLEWARE_DIR
 # No apache:			--no-apache
 
 # do the apache stuff ourself
-sudo python tools/install_venv.py --no-apache #--no-database
+sudo python tools/install_venv.py --no-apache --no-database
 
 # need to configure these bad boys first 
 
@@ -92,10 +92,5 @@ sudo rm $MIDDLEWARE_DIR/.venv/lib/python2.7/site-packages/M2Crypto/__m2crypto.so
 sudo ln -s /usr/lib/python2.7/dist-packages/M2Crypto/__m2crypto.so $MIDDLEWARE_DIR/.venv/lib/python2.7/site-packages/M2Crypto/__m2crypto.so
 
 echo "Please edit auth_proxy/iptables.py to have proper settings then RUN!!!"
-
-if $CREATE_NEW_INTERFACE
-then
-    sudo /sbin/ip addr add $PROXY_HOST dev lo
-fi
 
 sudo chown -R $TUKEY_USER:$TUKEY_GROUP $MIDDLEWARE_DIR

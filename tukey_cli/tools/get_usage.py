@@ -139,7 +139,7 @@ def main():
                         formatted[cloud]["%s-raw" % key] += old[cloud]["%s-raw" % key]
                         formatted[cloud][key] = formatted[cloud]["%s-raw" % key] / formatted[cloud]["%s-count" % key]
                 old[cloud].update(formatted[cloud])
-                        
+
         old.update(formatted)
         formatted = old
 
