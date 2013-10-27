@@ -1,6 +1,5 @@
 #!/usr/bin/python
-from BaseHTTPServer import BaseHTTPRequestHandler
-from BaseHTTPServer import HTTPServer
+from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from ConfigParser import ConfigParser
 import json
 import sys
@@ -11,11 +10,9 @@ QUOTA_CONF  = 'quotas'
 
 class QuotaProxy(BaseHTTPRequestHandler):
 
-
     def address_string(self):
         host, port = self.client_address[:2]
         return '%s (no getfqdn)' % host #used to call: socket.getfqdn(host)
-
 
     def do_GET(self):
         username = self.path[1:]
@@ -27,7 +24,6 @@ class QuotaProxy(BaseHTTPRequestHandler):
 
         cpu = self.check_section('cpu', section)
         ram = self.check_section('ram', section)
-
 
         self.send_response(200)
         self.end_headers()
@@ -47,7 +43,6 @@ class QuotaProxy(BaseHTTPRequestHandler):
                 "security_groups": 0
             }}))
 
-
     def check_section(self, res, section):
 	rack_limit = {'cpu':288, 'ram': 1032192}	
 
@@ -56,7 +51,6 @@ class QuotaProxy(BaseHTTPRequestHandler):
         else:
             limit = rack_limit[res]
 	return limit
-
 
 def run(server_class=HTTPServer,
         handler_class=QuotaProxy):
