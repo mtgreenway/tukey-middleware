@@ -18,7 +18,7 @@ if %(pdc)s and getpass.getuser() != project_name:
     sys.exit(1)
 
 while not os.path.exists("%(setup_dir)s"):
-    time.wait(1) 
+    time.sleep(1) 
 
 headers = {"x-auth-project-id": project_name, "x-auth-token": auth_token}
 conn = httplib.HTTPConnection(host, port)
@@ -38,6 +38,11 @@ for i in servers:
 
 ips = '"' + ips + '"'
 
-os.system(" ".join(["sudo", "%(headnode_script)s", cluster_id, ips, "%(cores)s"]))
+if not %(pdc)s:
+    os.system("echo %(public_key)s >> /home/ubuntu/.ssh/authorized_keys")
+    os.system("""echo "%(private_key)s" >> /home/ubuntu/.ssh/id_dsa""")
+    os.system("chown ubuntu:ubuntu /home/ubuntu/.ssh/id_dsa")
+    os.system("chmod 600 /home/ubuntu/.ssh/id_dsa")
 
-os.system("echo ran /tmp/worked")
+os.system(" ".join(["sudo", "%(headnode_script)s", cluster_id, ips, "%(cores)s"]))
+#os.system("echo ran > /tmp/worked")
