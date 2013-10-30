@@ -58,10 +58,13 @@ NameVirtualHost $PROXY_HOST:${PORTS[$site_name]}
 <Virtualhost $PROXY_HOST:${PORTS[$site_name]}>
 
 RewriteEngine On
-RewriteRule ^/sullivan/(.*) /\$1 [PT]
-RewriteRule ^/goldberg/(.*) /\$1 [PT]
+" | sudo tee $MIDDLEWARE_DIR/bin/${site_name}-apache.conf > /dev/null
 
-WSGIScriptAlias / $MIDDLEWARE_DIR/${WSGI_DIRS[$site_name]}/${site_name}_wsgi.py
+for cloud in "$@"; do
+    echo "RewriteRule ^/${cloud}/(.*) /\$1 [PT]" | sudo tee -a $MIDDLEWARE_DIR/bin/${site_name}-apache.conf > /dev/null
+done
+
+echo "WSGIScriptAlias / $MIDDLEWARE_DIR/${WSGI_DIRS[$site_name]}/${site_name}_wsgi.py
 
 WSGIDaemonProcess tukey-$site_name user=$TUKEY_USER group=$TUKEY_GROUP processes=3 threads=1 python-path=$MIDDLEWARE_DIR/local:$MIDDLEWARE_DIR/${WSGI_DIRS[$site_name]}:$MIDDLEWARE_DIR/.venv/lib/python2.7/site-packages:$MIDDLEWARE_DIR/.venv/local/lib/python2.7/site-packages
 
@@ -75,7 +78,7 @@ CustomLog /var/log/apache2/tukey-${site_name}-access.log combined
   Allow from all
 </Directory>
 
-</virtualhost>" | sudo tee $MIDDLEWARE_DIR/bin/${site_name}-apache.conf > /dev/null
+</virtualhost>" | sudo tee -a $MIDDLEWARE_DIR/bin/${site_name}-apache.conf > /dev/null
 
     sudo ln -s $MIDDLEWARE_DIR/bin/${site_name}-apache.conf $APACHE_SITES_AVAILABLE/${site_name}
     sudo a2ensite $site_name
