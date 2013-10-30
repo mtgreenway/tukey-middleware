@@ -284,7 +284,6 @@ def launch_cluster(project_id, auth_token, cloud, username, image, flavor,
     service we can use -f to tell the each node in the cluster exactly what
     it needs to do. '''
     logger.debug("launching cluster")
-    print "keyname", keyname
 
     rand_base = "0000000%s" % random.randrange(sys.maxint)
     date = datetime.datetime.now()
@@ -338,7 +337,6 @@ def main():
         print launch_cluster(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4],
             sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8])
     if len(sys.argv) == 10:
-        print "key_name", sys.argv[9]
         print launch_cluster(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4],
             sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8], sys.argv[9])
     elif len(sys.argv) == 6:
