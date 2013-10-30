@@ -26,8 +26,16 @@ echo '$loglevel 4' >> $CONF_FILE
 
 echo '/etc/local/lib/' > $TORQ_CONF_FILE
 
-# Using a security flaw here w e will need to change this
-#sudo /tmp/setup_nodes.sh
-#sudo /glusterfs/users/torque_nodes/headnode/tukey_node.sh
+if ! %(pdc)s
+then
+    echo "Host torque-headnode-$CLUSTER_ID*" >> /home/ubuntu/.ssh/config
+    echo "    StrictHostKeyChecking no" >> /home/ubuntu/.ssh/config
+    echo "    UserKnownHostsFile=/dev/null" >> /home/ubuntu/.ssh/config
+    echo %(public_key)s >> /home/ubuntu/.ssh/authorized_keys
+    echo "%(private_key)s" > /home/ubuntu/.ssh/id_dsa
+    chown ubuntu:ubuntu /home/ubuntu/.ssh/id_dsa
+    chmod 600 /home/ubuntu/.ssh/id_dsa
+fi
+
 echo "test" > /tmp/worked
 sudo %(node_script)s
