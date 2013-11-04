@@ -45,12 +45,18 @@ class OpenStackApiProxy(object):
 
     def __call__(self, environ, start_response):
         req = Request(environ)
+	
+        self.logger.debug("envirion %s req %s", environ, req)
         auth_token = req.headers['x-auth-token']
-
+        if req.method == "GET" and req.path.startswith("/v1/images/") and \
+                len(req.path) == \
+                len("/v1/images/00000000-0000-0000-00000000000000000"):
+            req.method = "HEAD"
         try:
             values = self.mc.get(auth_token)
             if values == None:
                  values = {}
+            self.logger.debug("method %s", req.method)
             resp = self.handle_openstack_api(req, auth_token, values)
 
         except memcache.Client.MemcachedKeyNoneError:  
@@ -82,14 +88,14 @@ class OpenStackApiProxy(object):
     def get_name(self, command, method):
         ''' Get the name of the command'''
         name, _ = self.__obj_name(command)
-        if method == "POST" and name not in ['server']:
+        if method in ["POST"] and name not in ['server']:
             name = name[:-1]
         return name
 
 
     def is_single(self, command, method):
         ''' Whether this command is return a plural '''
-        if method == "POST":
+        if method in ["POST", "PUT"]:
             return True
         _, is_single = self.__obj_name(command)
         return is_single
@@ -284,6 +290,7 @@ class OpenStackApiProxy(object):
         headers["X-Auth-Project-Id"] = tenant_id
         if default_tenant is not None:
             path = path.replace(default_tenant, tenant_id)
+        self.logger.debug("METHOD %s", req.method)
         conn.request(req.method, extra_path + path, req.body, headers)
         response = conn.getresponse()
         if response.status == 404:
