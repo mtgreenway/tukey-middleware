@@ -72,10 +72,10 @@ def userInfo(method, id, cloud_name):
         join login_method on login_method.method_id = login_identifier.method_id
         join cloud on cloud.cloud_id = login.cloud_id
         where cloud_name='%(cloud)s' and login_method.method_name='%(meth)s'
-            and login_identifier.identifier='%(id)s';
+            and LOWER(login_identifier.identifier)=LOWER('%(id)s');
     '''
 
-    query = pre_query % {"meth": method, "id":id, "cloud": cloud_name}
+    query = pre_query % {"meth": method, "id": id, "cloud": cloud_name}
 
     creds = connect_and_query(query)
 
