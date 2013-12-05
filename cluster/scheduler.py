@@ -27,10 +27,17 @@ class connect_error():
         self.status_code = 500
 
 def get_host(cloud):
-    return local_settings.API_HOST
+    return local_settings.clouds[cloud]["nova_host"]
+    # wrong!
+    #return local_settings.API_HOST
+
+def response_ok(response_code):
+    return 200 <= response_code < 300
+
 
 def get_port(cloud):
-    return local_settings.NOVA_PROXY_PORT
+    return local_settings.clouds[cloud]["nova_port"]
+    #return local_settings.NOVA_PROXY_PORT
 
 def host_and_headers(cloud, project_id, auth_token):
     host = '%s:%s' % (get_host(cloud), get_port(cloud))
@@ -69,8 +76,9 @@ def get_instances(cloud, project_id, auth_token):
 def get_instance_name(project_id, auth_token, cloud, instance_id, instances):
     ''' Find this instance's name '''
     for instance in instances["servers"]:
-        if "id" in instance and instance["id"] == instance_id \
-                and instance["cloud_id"] == cloud:
+        if "id" in instance and instance["id"] == instance_id:
+            # we know this is the cloud we want
+            #    and instance["cloud_id"] == cloud:
             return instance["name"]
 
 
@@ -139,7 +147,7 @@ def get_cores(cloud, project_id, auth_token, flavor):
  
     #TODO: need to get all flavors and look through them for reliable ...
     response = flavor_request(cloud, project_id, auth_token, flavor)
-    if response.status_code == 200:
+    if response_ok(response.status_code):
         flavor_details = json.loads(response.text)
         return flavor_details["flavor"]["vcpus"]
 
@@ -213,7 +221,7 @@ def launch_instances(project_id, auth_token, cloud, image, flavor, number,
 
     head_node = {
         "server":  {
-            "name": "%s-torque-headnode-%s" % (cloud, cluster_id),
+            "name": "torque-headnode-%s" % (cluster_id),
             "flavorRef": 3,
             "imageRef": local_settings.clouds[cloud]["torque"]["headnode_image"],
             "max_count": 1,
@@ -227,7 +235,7 @@ def launch_instances(project_id, auth_token, cloud, image, flavor, number,
         head_node["server"]["key_name"] = keyname
 
     response = node_launch_request(cloud, project_id, auth_token, head_node) 
-    if response.status_code != 200:
+    if not response_ok(response.status_code):
        return response.status_code
 
     head_node_response = json.loads(response.text)
@@ -244,7 +252,7 @@ def launch_instances(project_id, auth_token, cloud, image, flavor, number,
 
     compute_node = {
         "server":  {
-            "name": "%s-torque-node-%s" % (cloud, cluster_id),
+            "name": "torque-node-%s" % (cluster_id),
             "flavorRef": flavor,
             "imageRef": image,
             "max_count": number,
@@ -259,7 +267,7 @@ def launch_instances(project_id, auth_token, cloud, image, flavor, number,
 
     response = node_launch_request(cloud, project_id, auth_token, compute_node)
 
-    if response.status_code != 200:
+    if not response_ok(response.status_code):
         logger.debug(response.status_code)
         logger.debug(response.text)
         logger.debug("Couldn't launch instances")
@@ -284,7 +292,7 @@ def launch_cluster(project_id, auth_token, cloud, username, image, flavor,
     service we can use -f to tell the each node in the cluster exactly what
     it needs to do. '''
     logger.debug("launching cluster")
-
+ 
     rand_base = "0000000%s" % random.randrange(sys.maxint)
     date = datetime.datetime.now()
     # underscore is not allowed in a hostname
@@ -295,7 +303,7 @@ def launch_cluster(project_id, auth_token, cloud, username, image, flavor,
 
     logger.debug(status)
 
-    if status != 200:
+    if not response_ok(status):
         return '{"message": "Not all nodes could be created.", "code": 409}'
  
     return json.dumps({"servers": [ {"id": ""} for i in range(int(number)) ] })
@@ -323,7 +331,7 @@ def delete_cluster(project_id, auth_token, cloud, username, instance_id):
             name_id == torque_id:
             logger.debug("deleting %s %s", instance["id"], instance["name"])
             response = node_delete_request(cloud, project_id, auth_token, instance["id"])
-            if response.status_code != 200:
+            if not response_ok(response.status_code):
                 error = True 
             logger.debug(response.text)
     if error:
@@ -334,14 +342,17 @@ def delete_cluster(project_id, auth_token, cloud, username, instance_id):
 def main():
     logger.debug("in main")
     if len(sys.argv) == 9:
-        print launch_cluster(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4],
+        print launch_cluster(sys.argv[1], sys.argv[8], sys.argv[3], sys.argv[4],
             sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8])
-    if len(sys.argv) == 10:
-        print launch_cluster(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4],
+    elif len(sys.argv) == 10:
+        print launch_cluster(sys.argv[1], sys.argv[8], sys.argv[3], sys.argv[4],
             sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8], sys.argv[9])
-    elif len(sys.argv) == 6:
-        print delete_cluster(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4],
+    elif len(sys.argv) == 7:
+        print delete_cluster(sys.argv[1], sys.argv[6], sys.argv[3], sys.argv[4],
             sys.argv[5])
+    else:
+        print '{"message": "Misconfigured in Tukey.", "code": 409}'
+
 
 
 if __name__ == "__main__":
